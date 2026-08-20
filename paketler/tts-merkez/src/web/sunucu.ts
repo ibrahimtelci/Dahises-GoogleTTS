@@ -11,7 +11,7 @@ import fastifyView from '@fastify/view';
 import { Eta } from 'eta';
 
 import type { ButceBekcisi } from '../motor/butce.ts';
-import type { SesMotoru } from '../motor/arayuz.ts';
+import type { MotorVekili } from '../motor/vekil.ts';
 import type { KlipDeposu } from '../depo/klip-deposu.ts';
 import type { Yapilandirma } from '../yapilandirma.ts';
 import type { Db } from '../veritabani/baglanti.ts';
@@ -26,10 +26,15 @@ import { sesRotalari } from './rotalar/sesler.ts';
 import { kotaRotalari } from './rotalar/kota.ts';
 import { kullaniciRotalari } from './rotalar/kullanicilar.ts';
 import { gunlukRotalari } from './rotalar/gunluk.ts';
+import { ayarRotalari } from './rotalar/ayarlar.ts';
 
 export type Baglam = {
   db: Db;
-  motor: SesMotoru;
+  /**
+   * Vekil sarmalayici: ayarlar ekranindan Google kimligi degisince ici
+   * degistirilir, referans sabit kalir (bkz. motor/vekil.ts).
+   */
+  motor: MotorVekili;
   depo: KlipDeposu;
   butce: ButceBekcisi;
   uretici: Uretici;
@@ -99,11 +104,32 @@ export async function sunucuKur(baglam: Baglam): Promise<FastifyInstance> {
     templates: GORUNUM_DIZINI,
   });
 
+  // GELISTIRME: giris atlama. Uretimde ASLA calismaz — yapilandirma zaten
+  // ORTAM='uretim' iken bayragi reddediyor, burada ikinci duvar var.
+  const girisAtla = baglam.ayar.GELISTIRME_GIRIS_ATLA && baglam.ayar.ORTAM !== 'uretim';
+
   // Ortak gorunum verisi + oturum kontrolu.
   app.addHook('preHandler', async (istek, yanit) => {
     const acikYollar = ['/giris', '/saglik', '/statik'];
     const yol = istek.url.split('?')[0] ?? '';
     const acik = acikYollar.some((a) => yol === a || yol.startsWith(a + '/'));
+
+    // Oturum yoksa superadmin olarak ac. Parola degisimi de atlanir.
+    if (girisAtla && !istek.session.kullanici) {
+      const satirlar = await baglam.db<
+        { id: string; kullanici_adi: string; rol: Rol }[]
+      >`SELECT id, kullanici_adi, rol FROM kullanici
+         WHERE aktif AND rol = 'superadmin' ORDER BY id LIMIT 1`;
+      const k = satirlar[0];
+      if (k) {
+        istek.session.kullanici = {
+          id: Number(k.id),
+          ad: k.kullanici_adi,
+          rol: k.rol,
+          parolaDegistir: false,
+        };
+      }
+    }
 
     if (!acik && !istek.session.kullanici) {
       if (istek.headers['hx-request']) {
@@ -115,6 +141,7 @@ export async function sunucuKur(baglam: Baglam): Promise<FastifyInstance> {
 
     // Parola degistirme zorunluysa baska yere gidilmez.
     if (
+      !girisAtla &&
       istek.session.kullanici?.parolaDegistir &&
       !yol.startsWith('/parola') &&
       !yol.startsWith('/cikis') &&
@@ -148,6 +175,7 @@ export async function sunucuKur(baglam: Baglam): Promise<FastifyInstance> {
   await app.register(kotaRotalari);
   await app.register(kullaniciRotalari);
   await app.register(gunlukRotalari);
+  await app.register(ayarRotalari);
 
   app.get('/', async (_istek, yanit) => yanit.redirect('/kelimeler'));
 
@@ -171,5 +199,11 @@ export function sayfaVerisi(
 ): Record<string, unknown> {
   const bildirim = istek.session.bildirim ?? null;
   if (bildirim) istek.session.bildirim = undefined;
-  return { kullanici: istek.session.kullanici ?? null, bildirim, ...ek };
+  return {
+    kullanici: istek.session.kullanici ?? null,
+    bildirim,
+    girisAtlaniyor: istek.server.baglam.ayar.GELISTIRME_GIRIS_ATLA &&
+      istek.server.baglam.ayar.ORTAM !== 'uretim',
+    ...ek,
+  };
 }

@@ -15,9 +15,8 @@ import { dbAc } from './veritabani/baglanti.ts';
 import { migrasyonlariUygula } from './veritabani/migrasyon.ts';
 import { ilkKurulum } from './ilk-kurulum.ts';
 import { ButceBekcisi } from './motor/butce.ts';
-import { GoogleMotoru } from './motor/google.ts';
-import { SahteMotor } from './motor/sahte.ts';
-import type { SesMotoru } from './motor/arayuz.ts';
+import { MotorVekili } from './motor/vekil.ts';
+import { motorKimligiCoz, motorKur } from './ayarlar.ts';
 import { KlipDeposu } from './depo/klip-deposu.ts';
 import { Uretici } from './uretim/uretici.ts';
 import { sunucuKur } from './web/sunucu.ts';
@@ -48,23 +47,40 @@ const butce = new ButceBekcisi(
 await butce.yukle();
 
 // ── Motor ──
-// Kimlik yoksa sahte motora düşülür: panel açılır, Google'a hiç gidilmez.
-const motor: SesMotoru = ayar.motorKimligiVar
-  ? new GoogleMotoru({
-      apiAnahtari: ayar.GOOGLE_TTS_API_KEY,
-      servisHesabiYolu: ayar.GOOGLE_APPLICATION_CREDENTIALS,
-      dilKodu: ayar.DIL_KODU,
-      eszamanlilik: ayar.GOOGLE_ESZAMANLILIK,
-      saniyedeIstek: ayar.GOOGLE_ISTEK_HIZI_SN,
-      butce,
-    })
-  : new SahteMotor();
+// Kimlik once veritabanindan (ayarlar ekrani), yoksa .env'den okunur.
+// Kimlik hic yoksa sahte motora dusulur: panel acilir, Google'a hic gidilmez.
+//
+// Vekil sarmalayici sayesinde ayarlar ekranindan anahtar degistirilince
+// sunucuyu yeniden baslatmaya gerek kalmaz (bkz. motor/vekil.ts).
+const motorKimligi = await motorKimligiCoz(db, ayar);
+const motor = new MotorVekili(motorKur(motorKimligi, ayar, butce));
 
-if (!ayar.motorKimligiVar) {
+if (motorKimligi.kaynak === 'yok') {
   gunluk.warn(
     {},
-    'Google kimliği yok — SAHTE motor kullanılıyor. Üretilen ses gerçek değildir.',
+    'Google kimliği yok — SAHTE motor kullanılıyor. Üretilen ses gerçek değildir. ' +
+      'Ayarlar ekranından API anahtarı girebilirsiniz.',
   );
+} else {
+  gunluk.info({ kaynak: motorKimligi.kaynak }, 'Google kimliği yüklendi');
+}
+
+// ── GELİŞTİRME: giriş atlama uyarısı ──
+if (ayar.GELISTIRME_GIRIS_ATLA) {
+  if (ayar.ORTAM === 'uretim') {
+    // Sert duvar: uretimde bu bayrak calismaz, uygulama acilmaz.
+    console.error(
+      '\nGELISTIRME_GIRIS_ATLA=true ile ORTAM=uretim birlikte kullanilamaz.\n' +
+        'Uretimde kimlik dogrulamasi kapatilamaz. .env dosyasini duzeltin.\n',
+    );
+    process.exit(1);
+  }
+  console.log('\n' + '!'.repeat(72));
+  console.log('  GİRİŞ ATLANIYOR — kimlik doğrulaması KAPALI');
+  console.log('  Herkes superadmin olarak girer. Yalnız geliştirme içindir.');
+  console.log('  Kapatmak için .env: GELISTIRME_GIRIS_ATLA=false');
+  console.log('!'.repeat(72) + '\n');
+  gunluk.warn({}, 'GELİŞTİRME: giriş atlanıyor, kimlik doğrulaması kapalı');
 }
 
 // ── İlk kurulum ──

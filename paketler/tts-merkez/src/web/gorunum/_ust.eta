@@ -65,6 +65,13 @@ audio { width: 100%; margin-top: 6px; }
 <body>
 <header class="ust">
   <span class="marka">tts-merkez</span>
+<% if (it.girisAtlaniyor) { %>
+  <div style="background:#7a2020; color:#fff; padding:6px 16px; text-align:center; font-size:13px">
+    <strong>GİRİŞ ATLANIYOR</strong> — kimlik doğrulaması kapalı, herkes superadmin.
+    Yalnız geliştirme içindir. Kapatmak için <span class="mono">.env</span>:
+    <span class="mono">GELISTIRME_GIRIS_ATLA=false</span>
+  </div>
+<% } %>
   <a href="/kelimeler" class="<%= it.aktif === 'kelimeler' ? 'aktif' : '' %>">Kelimeler</a>
   <a href="/toplu" class="<%= it.aktif === 'toplu' ? 'aktif' : '' %>">Toplu ekleme</a>
   <a href="/sablonlar" class="<%= it.aktif === 'sablonlar' ? 'aktif' : '' %>">Şablonlar</a>
@@ -73,6 +80,7 @@ audio { width: 100%; margin-top: 6px; }
   <a href="/gunluk" class="<%= it.aktif === 'gunluk' ? 'aktif' : '' %>">Günlük</a>
   <% if (it.kullanici && it.kullanici.rol === 'superadmin') { %>
   <a href="/kullanicilar" class="<%= it.aktif === 'kullanicilar' ? 'aktif' : '' %>">Kullanıcılar</a>
+  <a href="/ayarlar" class="<%= it.aktif === 'ayarlar' ? 'aktif' : '' %>">Ayarlar</a>
   <% } %>
   <span class="sag">
     <% if (it.kullanici) { %>

@@ -1,0 +1,137 @@
+<%~ include('./_ust.eta', it) %>
+<h1>Ayarlar</h1>
+<p class="aciklama">
+  Buradaki iki ayar da <strong>çalışma anında</strong> değişir; sunucuyu yeniden başlatmaya
+  gerek yoktur. Ayarlar <span class="mono">.env</span> dosyasını <strong>ezer</strong> —
+  buradaki alan boşsa <span class="mono">.env</span> geçerli kalır.
+</p>
+
+<div class="kart">
+  <h2 style="margin-top:0">Google kimliği</h2>
+
+  <p class="kucuk">
+    Şu anki motor: <strong><%= it.kimlik.motorAdi %></strong>
+    <% if (it.kimlik.sahte) { %>
+      <span class="rozet failed">SAHTE — üretilen ses gerçek değil</span>
+    <% } else { %>
+      <span class="rozet ready">gerçek</span>
+    <% } %>
+    · Kaynak:
+    <strong><%= it.kimlik.kaynak === 'veritabani' ? 'Ayarlar' : (it.kimlik.kaynak === 'env' ? '.env dosyası' : 'yok') %></strong>
+  </p>
+
+  <table style="margin-bottom:12px">
+    <tbody>
+      <tr><th style="width:200px">API anahtarı</th><td class="mono"><%= it.kimlik.apiMaskeli %></td></tr>
+      <tr><th>Service account</th><td class="mono"><%= it.kimlik.servisHesabi ?? '—' %></td></tr>
+    </tbody>
+  </table>
+
+  <form method="post" action="/ayarlar/google">
+    <label>Yeni API anahtarı
+      <input type="password" name="apiAnahtari" autocomplete="off" placeholder="AIza… (boş bırakılırsa değişmez)">
+    </label>
+    <label>Service account JSON yolu <span class="soluk">(opsiyonel)</span>
+      <input type="text" name="servisHesabi" autocomplete="off" placeholder="C:\yol\anahtar.json">
+    </label>
+    <button type="submit">Kaydet ve motoru yenile</button>
+    <button type="submit" name="temizle" value="1" class="ikincil"
+            onclick="return confirm('Kimlik silinecek ve sistem SAHTE motora düşecek. Google\'a hiç gidilmeyecek. Emin misiniz?')">
+      Kimliği temizle
+    </button>
+  </form>
+
+  <p style="margin-top:14px">
+    <button type="button" hx-post="/ayarlar/google/dene" hx-target="#dene-sonuc" hx-swap="innerHTML" class="ikincil">
+      Bağlantıyı dene
+    </button>
+    <span class="soluk kucuk">— <span class="mono">listVoices</span> çağırır, karakter harcamaz.</span>
+  </p>
+  <div id="dene-sonuc"></div>
+
+  <div class="uyari" style="margin-top:14px">
+    <strong>Anahtar veritabanında düz metin durur.</strong> <span class="mono">pg_dump</span>
+    yedeği bu anahtarı içerir; <span class="mono">yedek/</span> dizini dışarı çıkarılmamalı.
+    Arayüz anahtarı hiçbir zaman tam göstermez.
+  </div>
+</div>
+
+<div class="kart">
+  <h2 style="margin-top:0">Ses profilleri</h2>
+  <p class="kucuk">
+    Varsayılan profil, üretimin hangi sesle yapılacağını belirler. Profil eklemek bankayı
+    büyütür: <strong>her profil ayrı bir banka varyantıdır</strong>, aynı kelime her profil
+    için yeniden üretilir.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Profil</th><th>Ses</th><th>Tiyer</th><th>Örnekleme</th><th>Durum</th><th>İşlem</th></tr>
+    </thead>
+    <tbody>
+    <% for (const p of it.profiller) { %>
+      <tr>
+        <td>
+          <strong><%= p.id %></strong>
+          <% if (p.varsayilan) { %><span class="rozet ready">varsayılan</span><% } %>
+        </td>
+        <td class="mono"><%= p.motor_sesi %></td>
+        <td><%= it.tiyerAdlari[p.tiyer] ?? p.tiyer %></td>
+        <td><%= p.ornek_hizi %> Hz</td>
+        <td>
+          <% if (p.aktif) { %><span class="rozet ready">aktif</span>
+          <% } else { %><span class="rozet failed">pasif</span><% } %>
+        </td>
+        <td>
+          <% if (!p.varsayilan && p.aktif) { %>
+            <form method="post" action="/ayarlar/profil/<%= p.id %>/varsayilan" style="display:inline">
+              <button type="submit" class="ikincil kucuk">Varsayılan yap</button>
+            </form>
+          <% } %>
+          <% if (!p.varsayilan) { %>
+            <form method="post" action="/ayarlar/profil/<%= p.id %>/durum" style="display:inline">
+              <button type="submit" class="ikincil kucuk"><%= p.aktif ? 'Pasifleştir' : 'Etkinleştir' %></button>
+            </form>
+          <% } %>
+        </td>
+      </tr>
+    <% } %>
+    <% if (it.profiller.length === 0) { %>
+      <tr><td colspan="6" class="soluk">Profil yok.</td></tr>
+    <% } %>
+    </tbody>
+  </table>
+</div>
+
+<div class="kart">
+  <h2 style="margin-top:0">Profil ekle</h2>
+  <p class="kucuk">
+    Ses listesi Google’dan <strong>canlı</strong> çekilir, elle yazılmaz.
+    Kesme yöntemini desteklemeyen sesler (Chirp 3 HD) listelenmez — SSML işaretlerine
+    zaman damgası döndürmedikleri için bu mimaride kullanılamazlar (§6.6).
+  </p>
+
+  <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end">
+    <label style="flex:0 0 180px">Tiyer
+      <select name="tiyer" hx-get="/ayarlar/sesler" hx-target="#ses-secici" hx-include="[name='cinsiyet']" hx-trigger="change">
+        <option value="">hepsi</option>
+        <option value="standard">Standard — 4M/ay ücretsiz</option>
+        <option value="wavenet">WaveNet — 1M/ay ücretsiz</option>
+      </select>
+    </label>
+    <label style="flex:0 0 160px">Cinsiyet
+      <select name="cinsiyet" hx-get="/ayarlar/sesler" hx-target="#ses-secici" hx-include="[name='tiyer']" hx-trigger="change">
+        <option value="">hepsi</option>
+        <option value="FEMALE">Kadın</option>
+        <option value="MALE">Erkek</option>
+      </select>
+    </label>
+    <button type="button" class="ikincil" hx-get="/ayarlar/sesler" hx-target="#ses-secici"
+            hx-include="[name='tiyer'],[name='cinsiyet']">Sesleri getir</button>
+  </div>
+
+  <div id="ses-secici" style="margin-top:14px">
+    <p class="soluk kucuk">Tiyer veya cinsiyet seçin — sesler burada listelenir.</p>
+  </div>
+</div>
+<%~ include('./_alt.eta', it) %>

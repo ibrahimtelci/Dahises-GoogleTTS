@@ -7,6 +7,17 @@ import { z } from 'zod';
 const sema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL gerekli'),
   GOOGLE_TTS_API_KEY: z.string().min(1).optional(),
+
+  /**
+   * GELISTIRME KOLAYLIGI — giris ekranini atlar, superadmin olarak oturum acar.
+   * ORTAM='uretim' iken YOK SAYILIR (asagida sert kontrol var). Sistem
+   * tamamlaninca .env'den kaldirilacak.
+   */
+  GELISTIRME_GIRIS_ATLA: z
+    .enum(['true', 'false'])
+    .optional()
+    .default('false')
+    .transform((v) => v === 'true'),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().min(1).optional(),
   BANKA_DIZINI: z.string().min(1, 'BANKA_DIZINI gerekli'),
   BANKA_ORNEKLEME_HIZI: z.coerce.number().int().positive(),

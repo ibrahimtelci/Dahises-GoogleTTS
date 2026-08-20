@@ -1,0 +1,38 @@
+<% if (it.sesler.length === 0) { %>
+  <p class="soluk">Bu filtreye uyan, kesme yöntemini destekleyen ses yok.</p>
+<% } else { %>
+<table>
+  <thead>
+    <tr><th>Ses</th><th>Cinsiyet</th><th>Tiyer</th><th>Örnekleme</th><th style="width:340px">Profil olarak ekle</th></tr>
+  </thead>
+  <tbody>
+  <% for (const s of it.sesler) { %>
+    <tr>
+      <td class="mono"><%= s.ad %></td>
+      <td><%= s.cinsiyetAdi %></td>
+      <td><%= s.tiyerAdi %></td>
+      <td><%= s.dogalOrnekHizi %> Hz</td>
+      <td>
+        <% if (s.zatenVar) { %>
+          <span class="rozet ready">zaten profil olarak ekli</span>
+        <% } else { %>
+          <form method="post" action="/ayarlar/profil" style="display:flex; gap:6px; align-items:center">
+            <input type="hidden" name="motorSesi" value="<%= s.ad %>">
+            <input type="text" name="id" placeholder="profil adı (ör. kadin-2)"
+                   pattern="[a-z0-9-]+" required style="width:150px; margin:0">
+            <label class="kucuk" style="margin:0; display:flex; align-items:center; gap:4px">
+              <input type="checkbox" name="varsayilanYap" value="1" style="width:auto; margin:0"> varsayılan
+            </label>
+            <button type="submit" class="kucuk">Ekle</button>
+          </form>
+        <% } %>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+<p class="soluk kucuk">
+  <%= it.sesler.length %> ses. Profil adı yalnız küçük harf, rakam ve tire içerebilir.
+  Eklemek bankayı büyütür — her profil ayrı banka varyantıdır.
+</p>
+<% } %>
