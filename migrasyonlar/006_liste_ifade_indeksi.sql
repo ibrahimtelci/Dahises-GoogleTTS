@@ -1,0 +1,37 @@
+-- 006 — Kelime listesi icin ifade indeksi.
+--
+-- Gerekce: yuk testi (betikler/yuk-testi.mjs, 250.000 satir) panel listesinin
+-- derin sayfalarda coktugunu gosterdi:
+--
+--   offset  5.000  ->   110 ms
+--   offset 50.000  ->   310 ms
+--   offset 249.950 ->   549 ms
+--
+-- EXPLAIN sebebi net soyluyordu:
+--
+--   Sort  (actual time=249..287 rows=250000)
+--     Sort Key: ((durum = 'ready')), olusturuldu DESC, id DESC
+--     Sort Method: external merge  Disk: 8336kB
+--
+-- Panel sorgusu "cevrilmemisler once" gorunumu icin
+-- ORDER BY (durum = 'ready') ASC, olusturuldu DESC, id DESC kullaniyor.
+-- Mevcut klip_liste_ix (durum, olusturuldu DESC, id DESC) bu IFADEYE uymuyor:
+-- durum kolonunun kendisi degil, (durum = 'ready') boolean ifadesi siralaniyor.
+-- Planlayici indeksi kullanamayip her sayfa icin 250.000 satiri DISKTE
+-- siraliyordu.
+--
+-- Ifade indeksi tam bu siralamayi karsiliyor:
+--
+--   offset  5.000  ->     3 ms   (39 kat)
+--   offset 50.000  ->    24 ms   (13 kat)
+--   offset 249.950 ->   124 ms   (4,4 kat)
+--
+-- Plan artik Index Scan; disk siralamasi tamamen kalkti. Indeks boyutu ~10 MB.
+--
+-- NOT: son sayfa hala 124 ms, cunku OFFSET 249.950 indeks icinde 250 bin girdi
+-- yurumek zorunda — bu OFFSET sayfalamasinin dogasinda var. Anahtar tabanli
+-- (keyset) sayfalamaya gecmek bunu da cozer ama arayuz degisikligi ister ve
+-- son sayfa pratikte ziyaret edilmiyor. Bkz. TODO-BLOKE.md.
+
+CREATE INDEX klip_liste_ifade_ix
+  ON klip ((durum = 'ready'), olusturuldu DESC, id DESC);

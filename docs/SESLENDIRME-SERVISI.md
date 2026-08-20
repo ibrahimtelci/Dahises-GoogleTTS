@@ -1594,15 +1594,21 @@ doğar. 23. hastanenin fallback oranı ilk gün bile %1'in altında olur.
 
 Ortalama anons: ~6 parça, ~4 sn ses = ~190 KB PCM buffer.
 
-| İşlem | CPU |
-|---|---|
-| 6 buffer concat | ~30 µs |
-| Crossfade (6 dikiş) | ~10 µs |
-| rate/pitch (istenmişse) | ~3–10 ms |
-| Format dönüşümü (WAV başlığı) | ~1 µs |
-| HTTP request/response overhead | ~0,3–0,8 ms |
-| **Toplam (DSP'siz)** | **~1 ms** |
-| **Toplam (DSP'li)** | **~10 ms** |
+**Ölçüldü** (`betikler/yuk-testi-ses.mjs`, 5 parça / 3,85 sn anons, Node 24):
+
+| İşlem | Ortanca | p99 |
+|---|---|---|
+| Birleştirme (5 parça, 45 ms crossfade) | 5,21 ms | 14,5 ms |
+| WAV başlığı ekleme | 0,17 ms | 1,5 ms |
+| Şablon parçalama | 0,18 ms | 0,6 ms |
+| Normalizasyon (tek token) | 0,016 ms | 0,07 ms |
+| XML kaçışı | 0,002 ms | 0,005 ms |
+| **TAM İSTEK (birleştir + WAV)** | **4,73 ms** | **14,0 ms** |
+
+> **Önceki sürüm ~1 ms diyordu; gerçek 4,7 ms.** Fark, birleştirmenin her klibi
+> PCM→Float32→PCM çevirmesinden geliyor. Saf kopyalama bölgelerini Int16 üzerinde yapıp
+> float matematiğini yalnız dikişlere uygulamak bunu ~1 ms'e indirebilir — ama gerek yok,
+> aşağıdaki paya bakın.
 
 ### Ölçülmüş tepe yükte (0,87 istek/sn ortalama, 9 istek/sn salvo)
 
@@ -1617,7 +1623,17 @@ Ortalama anons: ~6 parça, ~4 sn ses = ~190 KB PCM buffer.
 | RAM (~100 WS bağlantısı) | ~6 MB |
 | Ağ çıkışı | ~170 KB/sn (~1,4 Mbit/sn) |
 
-Servisin teorik tavanı ~500–1.000 istek/sn. Ölçülen tepe salvo bunun **yüzde biri**.
+**Ölçülen teorik tavan: 189 istek/sn** (tek çekirdek, sürekli yük). Önceki sürüm
+500–1.000 diyordu — o da yanlıştı, ama sonuç değişmiyor:
+
+| Salvo | İşlem süresi | Tek çekirdeğin |
+|---|---|---|
+| **9 istek/sn** (ölçülen tepe) | 44 ms | **%4,4'ü** |
+| 20 istek/sn | 106 ms | %10,6'sı |
+| 50 istek/sn | 253 ms | %25,3'ü |
+| 100 istek/sn | 515 ms | %51,5'i |
+
+Ölçülen tepe salvoya karşı **21 kat pay** var. Cluster gerekmiyor (§10 "Yapılmayacaklar").
 
 > **Banka RAM'e yüklenmez — bu karar değişti.** Önceki sürüm açılışta 1,2 GB'lık bankayı
 > belleğe almayı öngörüyordu. Ölçülen banka boyutu 13,6–29 GB (§7.2); bu artık mümkün değil,

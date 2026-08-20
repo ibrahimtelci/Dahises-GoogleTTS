@@ -129,3 +129,34 @@ Bunlar eksik değil, **bu turun kapsamı değil** — ama şema ve arayüz yeri 
 - İkisi de hastane trafiğiyle dolacak kolonlar. Şu an yalnız `toplu` ve `deneme`
   kaynakları üretiliyor. Arayüzdeki "kaynak" filtresi çalışıyor ama fallback seçeneği
   bu turda hep boş döner.
+
+---
+
+## [T-YUK] Keyset sayfalama — son sayfalar hâlâ yavaş
+
+**Ne eksik:** Panel listesi `LIMIT/OFFSET` kullanıyor. `006_liste_ifade_indeksi.sql`
+derin sayfaları 549 ms'den 124 ms'ye indirdi ama `OFFSET 249.950` hâlâ indeks içinde
+250 bin girdi yürümek zorunda — bu OFFSET sayfalamasının doğasında var.
+
+**Ne varsaydım:** Son sayfalar pratikte ziyaret edilmiyor; kullanıcı filtreleyip
+arıyor, 5.000. sayfaya gitmiyor. 124 ms kabul edilebilir.
+
+**Gerçek ihtiyaç doğarsa nereyi değiştir:** `paketler/tts-merkez/src/web/rotalar/kelimeler.ts`
+— `OFFSET` yerine anahtar tabanlı (keyset) sayfalama:
+`WHERE ((durum='ready'), olusturuldu, id) < (son_satirin_degerleri)`. Arayüzde
+"sonraki/önceki" bağlantıları sayfa numarası yerine imleç taşımalı. Ölçüm ve gerekçe:
+`YUK-TESTI.md`.
+
+---
+
+## [T-INT16] Ses birleştirme 2,4 kat optimize edilebilir
+
+**Ne eksik:** `birlestir()` her klibi PCM→Float32→PCM çeviriyor. Ölçülen istek başına
+süre 4,73 ms; dokümanın §10'da öngördüğü ~1 ms değil.
+
+**Ne varsaydım:** Optimize etmeye gerek yok. Ölçülen tepe salvo 9 istek/sn ve teorik
+tavan 189 istek/sn — **21 kat pay** var, p99 bile 14 ms.
+
+**Gerçek ihtiyaç doğarsa nereyi değiştir:** `paketler/tts-merkez/src/ses/pcm.ts` —
+saf kopyalama bölgelerini Int16 üzerinde yap, float matematiğini yalnız crossfade
+dikişlerine uygula. Altın dosya testleri çıktının bayt-birebir aynı kaldığını doğrular.
