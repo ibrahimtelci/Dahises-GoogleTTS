@@ -1,0 +1,29 @@
+# Kimlik ve sırlar — ASLA depoya girmez
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+ILK-KURULUM.md
+
+# Bagimliliklar
+node_modules/
+.pnpm-store/
+
+# Derleme ciktilari
+dist/
+build/
+*.tsbuildinfo
+
+# Uretilen veri — banka klipleri, prototip ciktilari
+veri/
+prototip/cikti/
+
+# Isletim sistemi / editor
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+
+# Loglar
+*.log

@@ -1,0 +1,13 @@
+{
+  "name": "seslendirme-prototip",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Parca birlestirmeyle kurulan Turkce anons cumlesinin kalitesini olcen prototip",
+  "scripts": {
+    "sesler": "node sesler.js",
+    "plan": "node uret.js",
+    "uret": "node uret.js --calistir",
+    "birlestir": "node birlestir.js"
+  }
+}
