@@ -1,0 +1,42 @@
+<div class="kart">
+  <h2>Sonuç</h2>
+  <div class="izgara">
+    <div>
+      <h3 style="font-size:15px;margin:0">Gerçek — tek seferde sentezlendi</h3>
+      <p class="soluk kucuk"><%= it.sonuc.gercek.sureMs %> ms · <%= it.sonuc.gercek.karakter %> karakter</p>
+      <audio controls src="/sesler/deneme/ses/<%= it.kimlik %>/gercek.wav"></audio>
+    </div>
+    <div>
+      <h3 style="font-size:15px;margin:0">Birleştirilmiş — çapraz taşıyıcılardan kesildi</h3>
+      <p class="soluk kucuk"><%= it.sonuc.birlesik.sureMs %> ms · <%= it.sonuc.birlesik.karakter %> karakter</p>
+      <audio controls src="/sesler/deneme/ses/<%= it.kimlik %>/birlesik.wav"></audio>
+    </div>
+  </div>
+
+  <p class="kucuk" style="margin-top:12px">
+    Süre farkı: <strong><%= it.sureFarki %></strong> ·
+    Toplam harcanan: <strong><%= it.sonuc.toplamKarakter.toLocaleString('tr-TR') %> karakter</strong>,
+    <%= it.sonuc.cagriSayisi %> çağrı
+  </p>
+
+  <h3 style="font-size:15px">Parçalar hangi kaynaktan geldi</h3>
+  <table>
+    <thead><tr><th>Yuva</th><th>Metin</th><th>Kaynak</th><th>Süre</th></tr></thead>
+    <tbody>
+    <% for (const p of it.sonuc.birlesik.parcalar) { %>
+      <tr>
+        <td class="mono"><%= p.yuva %></td>
+        <td class="mono"><%= p.metin %></td>
+        <td>
+          <% if (p.kaynak === 'banka') { %>
+            <span class="rozet ready">bankadan</span>
+          <% } else { %>
+            <span class="rozet uretiliyor">yeni taşıyıcı #<%= p.tasiyiciNo %></span>
+          <% } %>
+        </td>
+        <td><%= p.sureMs %> ms</td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+</div>

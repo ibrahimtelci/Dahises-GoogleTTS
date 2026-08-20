@@ -15,8 +15,9 @@ dist/
 build/
 *.tsbuildinfo
 
-# Uretilen veri — banka klipleri, prototip ciktilari, gecici
+# Uretilen veri — banka klipleri, prototip ciktilari, yedekler, gecici
 veri/
+yedek/
 .gecici/
 prototip/cikti/
 

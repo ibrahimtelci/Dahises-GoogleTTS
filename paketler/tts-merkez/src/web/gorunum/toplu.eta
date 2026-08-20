@@ -1,0 +1,43 @@
+<%~ include('./_ust.eta', it) %>
+<h1>Toplu ekleme</h1>
+<p class="aciklama">
+  Satır satır yapıştırın veya CSV/TXT yükleyin. Biçim: <span class="mono">kelime,tip</span> ya da yalnız
+  <span class="mono">kelime</span>. Onaydan önce normalizasyon sonucu ve karakter maliyeti gösterilir.
+</p>
+
+<div class="kart">
+  <form hx-post="/toplu/onizleme" hx-target="#onizleme" hx-swap="innerHTML" hx-encoding="multipart/form-data">
+    <div class="satir">
+      <div>
+        <label for="profil">Profil</label>
+        <select id="profil" name="profil">
+          <% for (const p of it.profiller) { %>
+          <option value="<%= p.id %>"><%= p.id %> — <%= p.motor_sesi %> (<%= p.tiyer %>)</option>
+          <% } %>
+        </select>
+      </div>
+      <div>
+        <label for="varsayilanTip">Varsayılan tip (satırda belirtilmemişse)</label>
+        <select id="varsayilanTip" name="varsayilanTip">
+          <% for (const t of it.tipler) { %><option value="<%= t %>"><%= t %></option><% } %>
+        </select>
+      </div>
+      <div>
+        <label for="hastaneId">Hastane (doktor/poliklinik için)</label>
+        <input id="hastaneId" name="hastaneId" type="number" value="0" min="0" style="width:100px">
+      </div>
+    </div>
+    <label for="metin">Kelimeler</label>
+    <textarea id="metin" name="metin" placeholder="karabulut,soyad&#10;yılmaz,soyad&#10;Wagner,soyad&#10;Uzm.Dr. Eda Birgül,doktor"></textarea>
+    <div class="satir" style="margin-top:10px">
+      <div>
+        <label for="dosya">veya CSV/TXT dosyası</label>
+        <input id="dosya" name="dosya" type="file" accept=".csv,.txt">
+      </div>
+      <button type="submit">Önizle</button>
+    </div>
+  </form>
+</div>
+
+<div id="onizleme"></div>
+<%~ include('./_alt.eta', it) %>

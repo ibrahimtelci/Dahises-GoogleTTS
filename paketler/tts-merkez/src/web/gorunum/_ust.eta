@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= it.baslik %> · tts-merkez</title>
+<script src="/statik/htmx.min.js"></script>
+<style>
+:root {
+  --zemin: #f7f7f8; --kart: #fff; --kenar: #d8d8dd; --metin: #1c1c1f; --soluk: #6a6a75;
+  --vurgu: #1f6feb; --basari: #1a7f37; --uyari: #9a6700; --hata: #cf222e;
+  --uyari-zemin: #fff8c5; --hata-zemin: #ffebe9; --basari-zemin: #dafbe1;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.5 system-ui, "Segoe UI", sans-serif; background: var(--zemin); color: var(--metin); }
+header.ust { background: #1c1c1f; color: #fff; padding: 0 16px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+header.ust .marka { font-weight: 700; margin-right: 16px; padding: 12px 0; }
+header.ust a { color: #d8d8dd; text-decoration: none; padding: 12px 10px; display: block; border-bottom: 2px solid transparent; }
+header.ust a:hover { color: #fff; }
+header.ust a.aktif { color: #fff; border-bottom-color: var(--vurgu); }
+header.ust .sag { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+header.ust .rol { color: #9a9aa5; font-size: 13px; }
+main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 24px 0 8px; }
+p.aciklama { color: var(--soluk); margin: 0 0 16px; }
+.kart { background: var(--kart); border: 1px solid var(--kenar); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+table { width: 100%; border-collapse: collapse; background: var(--kart); font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--kenar); vertical-align: top; }
+th { background: #f0f0f2; font-weight: 600; font-size: 13px; }
+tr:hover td { background: #fafafa; }
+.rozet { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.rozet.ready { background: var(--basari-zemin); color: var(--basari); }
+.rozet.pending { background: #eef; color: #33f; }
+.rozet.uretiliyor { background: #e6f0ff; color: var(--vurgu); }
+.rozet.failed { background: var(--hata-zemin); color: var(--hata); }
+.rozet.engellendi { background: #eee; color: #555; }
+.rozet.kota_bekliyor { background: var(--uyari-zemin); color: var(--uyari); }
+.rozet.gri { background: #eee; color: #555; }
+form.satir { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+label { display: block; font-size: 13px; color: var(--soluk); margin-bottom: 2px; }
+input, select, textarea, button { font: inherit; padding: 6px 9px; border: 1px solid var(--kenar); border-radius: 6px; background: #fff; color: var(--metin); }
+textarea { width: 100%; min-height: 140px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+button { cursor: pointer; background: var(--vurgu); color: #fff; border-color: var(--vurgu); font-weight: 500; }
+button.ikincil { background: #fff; color: var(--metin); border-color: var(--kenar); }
+button.tehlike { background: var(--hata); border-color: var(--hata); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.uyari { padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid; }
+.uyari.basari { background: var(--basari-zemin); border-color: #aceebb; color: var(--basari); }
+.uyari.hata { background: var(--hata-zemin); border-color: #ffcecb; color: var(--hata); }
+.uyari.uyari { background: var(--uyari-zemin); border-color: #eedf9e; color: var(--uyari); }
+.cubuk { height: 22px; background: #eaeaee; border-radius: 4px; overflow: hidden; position: relative; }
+.cubuk > span { display: block; height: 100%; background: var(--basari); }
+.cubuk.uyari > span { background: #d4a72c; }
+.cubuk.kritik > span, .cubuk.dolu > span { background: var(--hata); }
+.sayfalama { display: flex; gap: 6px; align-items: center; margin-top: 12px; font-size: 14px; }
+.soluk { color: var(--soluk); }
+.kucuk { font-size: 13px; }
+.mono { font-family: ui-monospace, Consolas, monospace; }
+.izgara { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+audio { width: 100%; margin-top: 6px; }
+.htmx-request { opacity: .6; }
+</style>
+</head>
+<body>
+<header class="ust">
+  <span class="marka">tts-merkez</span>
+  <a href="/kelimeler" class="<%= it.aktif === 'kelimeler' ? 'aktif' : '' %>">Kelimeler</a>
+  <a href="/toplu" class="<%= it.aktif === 'toplu' ? 'aktif' : '' %>">Toplu ekleme</a>
+  <a href="/sablonlar" class="<%= it.aktif === 'sablonlar' ? 'aktif' : '' %>">Şablonlar</a>
+  <a href="/sesler" class="<%= it.aktif === 'sesler' ? 'aktif' : '' %>">Sesler ve deneme</a>
+  <a href="/kota" class="<%= it.aktif === 'kota' ? 'aktif' : '' %>">Kota</a>
+  <a href="/gunluk" class="<%= it.aktif === 'gunluk' ? 'aktif' : '' %>">Günlük</a>
+  <% if (it.kullanici && it.kullanici.rol === 'superadmin') { %>
+  <a href="/kullanicilar" class="<%= it.aktif === 'kullanicilar' ? 'aktif' : '' %>">Kullanıcılar</a>
+  <% } %>
+  <span class="sag">
+    <% if (it.kullanici) { %>
+      <span class="rol"><%= it.kullanici.ad %> · <%= it.kullanici.rol %></span>
+      <a href="/parola">Parola</a>
+      <a href="/cikis">Çıkış</a>
+    <% } %>
+  </span>
+</header>
+<main>
+<% if (it.bildirim) { %>
+  <div class="uyari <%= it.bildirim.tur %>"><%= it.bildirim.metin %></div>
+<% } %>

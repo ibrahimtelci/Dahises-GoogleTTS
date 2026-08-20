@@ -1,0 +1,62 @@
+<%~ include('./_ust.eta', it) %>
+<h1>Şablonlar</h1>
+<p class="aciklama">
+  Cümle kalıbı. Değişkenler <span class="mono">{süslü}</span> parantez içinde yazılır.
+  Taşıyıcı cümlede hangi öğenin hangi yuvada olduğu buradan belirlenir — ad ve soyad farklı
+  tonlama yuvalarıdır (§7.5 kural 5), bu yüzden yuva <strong>tipi</strong> önemlidir:
+  üretim, kelimeyi yalnız kendi tonlama sınıfındaki bir yuvaya yerleştirir.
+</p>
+
+<% for (const s of it.sablonlar) { %>
+<div class="kart">
+  <h2 style="margin-top:0">
+    <%= s.ad %>
+    <% if (s.varsayilan) { %><span class="rozet ready">varsayılan</span><% } %>
+  </h2>
+  <p class="mono"><%= s.metin %></p>
+  <table style="max-width:700px">
+    <thead><tr><th>#</th><th>Yuva</th><th>Tür</th><th>Tip</th><th>Örnek değer</th></tr></thead>
+    <tbody>
+    <% for (const [i, y] of (s.ogeler || []).entries()) { %>
+      <tr>
+        <td class="soluk"><%= i %></td>
+        <td class="mono"><%= y.yuva %></td>
+        <td><%= y.tur %></td>
+        <td><%= y.tip %></td>
+        <td class="mono"><%= y.ornek %></td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+  <% if (it.yazabilir) { %>
+  <form method="post" action="/sablonlar/<%= s.id %>/sil" style="margin-top:10px"
+        onsubmit="return confirm('Şablon silinsin mi?')">
+    <button class="tehlike" type="submit">Sil</button>
+  </form>
+  <% } %>
+</div>
+<% } %>
+
+<% if (it.yazabilir) { %>
+<div class="kart">
+  <h2 style="margin-top:0">Yeni şablon</h2>
+  <form method="post" action="/sablonlar">
+    <div class="satir">
+      <div><label for="ad">Ad</label><input id="ad" name="ad" required placeholder="banko-cagrisi"></div>
+      <div style="flex:1">
+        <label for="metin">Metin</label>
+        <input id="metin" name="metin" required style="width:100%"
+               value="sayın {ad} {soyad} lütfen {banko} nolu bankoya geçiniz">
+      </div>
+    </div>
+    <label for="ornekler">
+      Değişken tanımları — satır başına <span class="mono">değişken=örnek=tip</span>
+    </label>
+    <textarea id="ornekler" name="ornekler" style="min-height:90px">ad=Mehmet=ad
+soyad=Karabulut=soyad
+banko=üç=sayi</textarea>
+    <button type="submit" style="margin-top:10px">Kaydet</button>
+  </form>
+</div>
+<% } %>
+<%~ include('./_alt.eta', it) %>

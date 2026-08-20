@@ -1,0 +1,76 @@
+<%~ include('./_ust.eta', it) %>
+<h1>Üretim ve denetim günlüğü</h1>
+
+<h2>Üretim günlüğü</h2>
+<table>
+  <thead>
+    <tr><th>Zaman</th><th>Tür</th><th>Profil</th><th>Klip</th><th>Karakter</th><th>Sonuç</th></tr>
+  </thead>
+  <tbody>
+  <% if (it.uretim.length === 0) { %>
+    <tr><td colspan="6" class="soluk">Kayıt yok.</td></tr>
+  <% } %>
+  <% for (const u of it.uretim) { %>
+    <tr>
+      <td class="kucuk soluk"><%= new Date(u.zaman).toLocaleString('tr-TR') %></td>
+      <td><%= u.tur %></td>
+      <td><%= u.profil || '—' %></td>
+      <td><%= u.klip_sayisi %></td>
+      <td><%= Number(u.karakter).toLocaleString('tr-TR') %></td>
+      <td>
+        <% if (u.basarili) { %>
+          <span class="rozet ready">tamam</span>
+        <% } else { %>
+          <span class="rozet failed">hata</span>
+          <div class="kucuk soluk"><%= String(u.hata || '').slice(0, 140) %></div>
+        <% } %>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+
+<h2>Hatalı, engellenen ve kota bekleyen klipler</h2>
+<table>
+  <thead>
+    <tr><th>Kelime</th><th>Profil</th><th>Durum</th><th>Deneme</th><th>Sonraki deneme</th><th>Hata</th></tr>
+  </thead>
+  <tbody>
+  <% if (it.sorunlu.length === 0) { %>
+    <tr><td colspan="6" class="soluk">Sorunlu klip yok.</td></tr>
+  <% } %>
+  <% for (const s of it.sorunlu) { %>
+    <tr>
+      <td class="mono"><%= s.kelime %></td>
+      <td><%= s.profil %></td>
+      <td><span class="rozet <%= s.durum %>"><%= s.durum %></span></td>
+      <td><%= s.deneme %></td>
+      <td class="kucuk soluk"><%= s.sonraki_deneme ? new Date(s.sonraki_deneme).toLocaleString('tr-TR') : '—' %></td>
+      <td class="kucuk"><%= String(s.hata || '').slice(0, 160) %></td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+
+<h2>Denetim günlüğü</h2>
+<p class="aciklama">Kim, ne zaman, ne üretti / sildi / engelledi / ayar değiştirdi.</p>
+<table>
+  <thead>
+    <tr><th>Zaman</th><th>Kullanıcı</th><th>Eylem</th><th>Hedef</th><th>Ayrıntı</th></tr>
+  </thead>
+  <tbody>
+  <% if (it.denetim.length === 0) { %>
+    <tr><td colspan="5" class="soluk">Kayıt yok.</td></tr>
+  <% } %>
+  <% for (const d of it.denetim) { %>
+    <tr>
+      <td class="kucuk soluk"><%= new Date(d.zaman).toLocaleString('tr-TR') %></td>
+      <td class="mono"><%= d.kullanici_adi || '—' %></td>
+      <td><%= d.eylem %></td>
+      <td class="mono kucuk"><%= d.hedef || '—' %></td>
+      <td class="kucuk soluk mono"><%= JSON.stringify(d.ayrinti) %></td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+<%~ include('./_alt.eta', it) %>

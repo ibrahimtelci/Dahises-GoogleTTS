@@ -1,0 +1,67 @@
+<%~ include('./_ust.eta', it) %>
+<h1>Ses profilleri ve deneme</h1>
+
+<h2>Kayıtlı profiller</h2>
+<table>
+  <thead><tr><th>Profil</th><th>Motor</th><th>Motor sesi</th><th>Tiyer</th><th>Örnekleme</th><th>Varsayılan</th><th></th></tr></thead>
+  <tbody>
+  <% for (const p of it.profiller) { %>
+    <tr>
+      <td class="mono"><%= p.id %></td><td><%= p.motor %></td><td class="mono"><%= p.motor_sesi %></td>
+      <td><%= p.tiyer %></td><td><%= p.ornek_hizi %> Hz</td>
+      <td><%= p.varsayilan ? '✓' : '' %></td>
+      <td><%= p.aktif ? '' : 'pasif' %></td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+
+<h2>Google'daki sesler (canlı liste)</h2>
+<p class="aciklama">
+  Liste <span class="mono">listVoices</span> ile çekilir, elle yazılmaz.
+  <strong>Chirp 3 HD seçilemez</strong>: SSML <span class="mono">&lt;mark&gt;</span> etiketlerine sıfır zaman
+  damgası döndürüyor, kesme yöntemi çalışmıyor (§6.6).
+</p>
+<div class="kart">
+  <button hx-get="/sesler/liste" hx-target="#ses-listesi" hx-swap="innerHTML" class="ikincil">Sesleri çek</button>
+  <span class="soluk kucuk">Bu istek ses üretmez, karakter harcamaz.</span>
+  <div id="ses-listesi" style="margin-top:12px"></div>
+</div>
+
+<h2>Deneme — gerçek cümle ile birleştirilmiş cümle yan yana</h2>
+<div class="uyari uyari">
+  <strong>Bu ekran Google'a gerçek istek atar.</strong> Maliyet onaydan önce gösterilir ve kota sayacına işlenir.
+  Birleştirilmiş sürüm <strong>çapraz</strong> kurulur: her parça farklı bir taşıyıcı cümleden gelir —
+  aynı cümleden kesip aynı cümleyi yeniden kurmak hiçbir şey kanıtlamaz.
+</div>
+
+<div class="kart">
+  <form hx-post="/sesler/deneme/maliyet" hx-target="#deneme" hx-swap="innerHTML">
+    <div class="satir">
+      <div>
+        <label for="dprofil">Profil</label>
+        <select id="dprofil" name="profil">
+          <% for (const p of it.profiller) { %>
+          <option value="<%= p.id %>"><%= p.id %> — <%= p.motor_sesi %> (<%= p.tiyer %>)</option>
+          <% } %>
+        </select>
+      </div>
+      <div>
+        <label for="sablonId">Kayıtlı şablon (isteğe bağlı)</label>
+        <select id="sablonId" name="sablonId">
+          <option value="">— serbest metin kullan —</option>
+          <% for (const s of it.sablonlar) { %>
+          <option value="<%= s.id %>"><%= s.ad %></option>
+          <% } %>
+        </select>
+      </div>
+    </div>
+    <label for="metin">Test metni (serbest) veya şablon değerleri (ad=Mehmet, soyad=Karabulut, banko=3)</label>
+    <input id="metin" name="metin" style="width:100%"
+           value="sayın Mehmet Karabulut lütfen üç nolu bankoya geçiniz" required>
+    <button type="submit" style="margin-top:10px">Maliyeti hesapla</button>
+  </form>
+</div>
+
+<div id="deneme"></div>
+<%~ include('./_alt.eta', it) %>

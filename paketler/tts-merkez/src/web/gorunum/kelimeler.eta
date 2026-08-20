@@ -1,0 +1,123 @@
+<%~ include('./_ust.eta', it) %>
+<h1>Kelime veritabanı</h1>
+<p class="aciklama">
+  Her satır bir (kelime, profil) çifti. Varsayılan sıralama: <strong>çevrilmemişler önce</strong>.
+  Toplam <%= it.toplam.toLocaleString('tr-TR') %> satır — sunucu tarafı sayfalama.
+</p>
+
+<form class="satir" method="get" action="/kelimeler">
+  <div>
+    <label for="q">Kelime ara</label>
+    <input id="q" name="q" value="<%= it.filtre.q %>" placeholder="karabulut">
+  </div>
+  <div>
+    <label for="durum">Durum</label>
+    <select id="durum" name="durum">
+      <option value="">hepsi</option>
+      <% for (const d of it.durumlar) { %>
+      <option value="<%= d %>" <%= it.filtre.durum === d ? 'selected' : '' %>><%= d %></option>
+      <% } %>
+    </select>
+  </div>
+  <div>
+    <label for="tip">Tip</label>
+    <select id="tip" name="tip">
+      <option value="">hepsi</option>
+      <% for (const t of it.tipler) { %>
+      <option value="<%= t %>" <%= it.filtre.tip === t ? 'selected' : '' %>><%= t %></option>
+      <% } %>
+    </select>
+  </div>
+  <div>
+    <label for="profil">Profil</label>
+    <select id="profil" name="profil">
+      <option value="">hepsi</option>
+      <% for (const p of it.profiller) { %>
+      <option value="<%= p.id %>" <%= it.filtre.profil === p.id ? 'selected' : '' %>><%= p.id %></option>
+      <% } %>
+    </select>
+  </div>
+  <div>
+    <label for="kaynak">Kaynak</label>
+    <select id="kaynak" name="kaynak">
+      <option value="">hepsi</option>
+      <option value="toplu" <%= it.filtre.kaynak === 'toplu' ? 'selected' : '' %>>toplu</option>
+      <option value="fallback" <%= it.filtre.kaynak === 'fallback' ? 'selected' : '' %>>fallback</option>
+      <option value="deneme" <%= it.filtre.kaynak === 'deneme' ? 'selected' : '' %>>deneme</option>
+    </select>
+  </div>
+  <div>
+    <label for="baslangic">Tarih (başlangıç)</label>
+    <input id="baslangic" type="date" name="baslangic" value="<%= it.filtre.baslangic %>">
+  </div>
+  <div>
+    <label for="bitis">Tarih (bitiş)</label>
+    <input id="bitis" type="date" name="bitis" value="<%= it.filtre.bitis %>">
+  </div>
+  <button type="submit">Filtrele</button>
+  <a href="/kelimeler"><button type="button" class="ikincil">Temizle</button></a>
+</form>
+
+<% if (it.uretimKilitli) { %>
+<div class="uyari uyari">
+  Üretim butonları kilitli: <%= it.kilitSebebi %>
+</div>
+<% } %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Kelime</th><th>Telaffuz</th><th>Tip</th><th>Profil</th><th>Durum</th>
+      <th>Süre</th><th>Sürüm</th><th>Kaynak</th><th>Eklendi</th><th>İşlem</th>
+    </tr>
+  </thead>
+  <tbody>
+  <% if (it.satirlar.length === 0) { %>
+    <tr><td colspan="10" class="soluk">Filtreye uyan kayıt yok.</td></tr>
+  <% } %>
+  <% for (const s of it.satirlar) { %>
+    <tr id="satir-<%= s.id %>">
+      <td class="mono"><%= s.kelime %></td>
+      <td class="mono soluk"><%= s.telaffuz || '—' %></td>
+      <td><%= s.tipler || '—' %></td>
+      <td><%= s.profil %></td>
+      <td>
+        <span class="rozet <%= s.durum %>"><%= it.durumEtiketi(s.durum) %></span>
+        <% if (s.hata) { %><div class="kucuk soluk" title="<%= s.hata %>"><%= String(s.hata).slice(0, 60) %></div><% } %>
+      </td>
+      <td><%= s.sure_ms ? s.sure_ms + ' ms' : '—' %></td>
+      <td class="soluk"><%= s.surum ?? '—' %></td>
+      <td class="soluk"><%= s.kaynak %></td>
+      <td class="soluk kucuk"><%= new Date(s.olusturuldu).toLocaleString('tr-TR') %></td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+        <% if (s.durum === 'ready') { %>
+          <button class="ikincil kucuk" hx-get="/kelimeler/<%= s.id %>/dinle" hx-target="#ses-<%= s.id %>" hx-swap="innerHTML">▶ dinle</button>
+        <% } %>
+        <% if (it.yazabilir) { %>
+          <button class="ikincil kucuk" hx-post="/kelimeler/<%= s.id %>/yeniden-uret" hx-target="#satir-<%= s.id %>" hx-swap="outerHTML" <%= it.uretimKilitli ? 'disabled title="' + it.kilitSebebi + '"' : '' %>>↻ yeniden üret</button>
+          <% if (s.durum === 'engellendi') { %>
+            <button class="ikincil kucuk" hx-post="/kelimeler/<%= s.id %>/engeli-kaldir" hx-target="#satir-<%= s.id %>" hx-swap="outerHTML">↺ engeli kaldır</button>
+          <% } else { %>
+            <button class="tehlike kucuk" hx-post="/kelimeler/<%= s.id %>/engelle" hx-target="#satir-<%= s.id %>" hx-swap="outerHTML" hx-confirm="Bu kelime engellensin mi? Bankaya girmez.">⛔ engelle</button>
+          <% } %>
+          <button class="ikincil kucuk" hx-get="/kelimeler/<%= s.id %>/telaffuz" hx-target="#ses-<%= s.id %>" hx-swap="innerHTML">✎ telaffuz</button>
+        <% } %>
+        </div>
+        <div id="ses-<%= s.id %>"></div>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+
+<div class="sayfalama">
+  <% if (it.sayfa > 1) { %>
+    <a href="<%= it.sayfaBaglantisi(it.sayfa - 1) %>"><button class="ikincil" type="button">‹ önceki</button></a>
+  <% } %>
+  <span class="soluk">sayfa <%= it.sayfa %> / <%= it.sonSayfa %></span>
+  <% if (it.sayfa < it.sonSayfa) { %>
+    <a href="<%= it.sayfaBaglantisi(it.sayfa + 1) %>"><button class="ikincil" type="button">sonraki ›</button></a>
+  <% } %>
+</div>
+<%~ include('./_alt.eta', it) %>

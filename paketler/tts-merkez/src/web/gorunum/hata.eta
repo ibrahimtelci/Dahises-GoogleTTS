@@ -1,0 +1,5 @@
+<%~ include('./_ust.eta', it) %>
+<h1>Hata</h1>
+<div class="uyari hata"><%= it.mesaj %></div>
+<p><a href="/kelimeler">Kelime listesine dön</a></p>
+<%~ include('./_alt.eta', it) %>

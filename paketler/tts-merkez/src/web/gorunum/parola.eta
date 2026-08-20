@@ -1,0 +1,17 @@
+<%~ include('./_ust.eta', it) %>
+<h1>Parola değiştir</h1>
+<% if (it.kullanici && it.kullanici.parolaDegistir) { %>
+<div class="uyari uyari">İlk giriş: devam etmeden önce parolanızı değiştirmeniz gerekiyor.</div>
+<% } %>
+<div class="kart" style="max-width:420px">
+  <form method="post" action="/parola">
+    <label for="e">Mevcut parola</label>
+    <input id="e" type="password" name="eskiParola" autocomplete="current-password" required style="width:100%">
+    <label for="y" style="margin-top:10px">Yeni parola (en az 12 karakter)</label>
+    <input id="y" type="password" name="yeniParola" autocomplete="new-password" minlength="12" required style="width:100%">
+    <label for="y2" style="margin-top:10px">Yeni parola (tekrar)</label>
+    <input id="y2" type="password" name="yeniParolaTekrar" autocomplete="new-password" minlength="12" required style="width:100%">
+    <button type="submit" style="margin-top:14px">Değiştir</button>
+  </form>
+</div>
+<%~ include('./_alt.eta', it) %>

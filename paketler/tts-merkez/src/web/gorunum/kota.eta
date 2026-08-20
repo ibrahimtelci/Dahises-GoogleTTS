@@ -1,0 +1,73 @@
+<%~ include('./_ust.eta', it) %>
+<h1>Kota paneli</h1>
+<p class="aciklama">
+  Her tiyerin kendi aylık ücretsiz kotası var ve birbirinden bağımsızdır (§6.4).
+  Sert limit kotanın <strong>%90</strong> seviyesidir: Google boşlukları, noktalamayı ve SSML
+  etiketlerini de sayar, ayrıca ay dönümünde saat farkı olabilir.
+</p>
+
+<% for (const k of it.kotalar) { %>
+<div class="kart">
+  <h2 style="margin-top:0"><%= k.tiyerAdi %> — <%= it.donemAdi %></h2>
+  <div class="cubuk <%= k.bant %>"><span style="width:<%= Math.min(100, k.yuzde).toFixed(1) %>%"></span></div>
+  <p class="kucuk" style="margin:6px 0 0">
+    <%= k.kullanilan.toLocaleString('tr-TR') %> / <%= k.limitSert.toLocaleString('tr-TR') %>
+    (%<%= k.yuzde.toFixed(1) %>) · toplam kota <%= k.limitToplam.toLocaleString('tr-TR') %><br>
+    Kalan: <strong><%= k.kalan.toLocaleString('tr-TR') %> karakter</strong> ·
+    Sıfırlanma: <%= k.sifirlanma %><br>
+    Eşikler: uyarı %70 = <%= k.uyariEsigi.toLocaleString('tr-TR') %> ·
+    kritik %85 = <%= k.kritikEsik.toLocaleString('tr-TR') %> ·
+    sert %90 = <%= k.limitSert.toLocaleString('tr-TR') %>
+  </p>
+  <% if (!k.kesmeDestegi) { %>
+    <div class="uyari uyari" style="margin-top:10px">
+      Bu tiyer kesme yöntemini desteklemiyor (§6.6) — profil olarak seçilemez, kota da harcanmaz.
+    </div>
+  <% } else if (k.bant === 'dolu') { %>
+    <div class="uyari hata" style="margin-top:10px">
+      <strong>Sert limit doldu.</strong> Bu tiyerde tüm Google çağrıları durdu ve üretim butonları kilitli.
+      Kota ayın başında yenilenir; bekleyen klipler <span class="mono">kota_bekliyor</span> durumunda korunuyor,
+      kaybolmuyor.
+    </div>
+  <% } else if (k.bant === 'kritik') { %>
+    <div class="uyari hata" style="margin-top:10px">
+      <strong>Kritik eşik (%85) aşıldı.</strong> Yeni <strong>toplu</strong> üretim durdu;
+      tekil fallback üretimi %90 sert limitine kadar sürüyor.
+    </div>
+  <% } else if (k.bant === 'uyari') { %>
+    <div class="uyari uyari" style="margin-top:10px">Uyarı eşiği (%70) aşıldı.</div>
+  <% } %>
+</div>
+<% } %>
+
+<div class="kart">
+  <h2 style="margin-top:0">Google geliştirme bütçesi</h2>
+  <p class="aciklama">
+    Aylık kotadan ayrı, bu geliştirme turuna ait sert sınır. Sayaç diske yazılır; süreç yeniden
+    başlayınca sıfırlanmaz.
+  </p>
+  <div class="cubuk <%= it.butce.kalanKlip === 0 ? 'dolu' : 'uyari' %>">
+    <span style="width:<%= Math.min(100, (it.butce.klip / it.butce.klipSiniri) * 100).toFixed(1) %>%"></span>
+  </div>
+  <p class="kucuk">
+    <%= it.butce.klip %> / <%= it.butce.klipSiniri %> klip · <%= it.butce.cagri %> çağrı ·
+    <%= it.butce.karakter.toLocaleString('tr-TR') %> karakter ·
+    kalan <strong><%= it.butce.kalanKlip %> klip</strong>
+  </p>
+</div>
+
+<div class="kart">
+  <h2 style="margin-top:0">Üretim kuyruğu</h2>
+  <table style="max-width:400px">
+    <thead><tr><th>Durum</th><th>Klip</th></tr></thead>
+    <tbody>
+    <% for (const [durum, adet] of Object.entries(it.kuyruk)) { %>
+      <tr>
+        <td><span class="rozet <%= durum %>"><%= durum %></span></td>
+        <td><%= Number(adet).toLocaleString('tr-TR') %></td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+</div>
+<%~ include('./_alt.eta', it) %>

@@ -1,0 +1,23 @@
+<div class="kart">
+  <h2>Maliyet onayı</h2>
+  <table style="max-width:620px">
+    <tr><th>Cümle</th><td class="mono"><%= it.cumle %></td></tr>
+    <tr><th>Parça sayısı</th><td><%= it.parcaSayisi %></td></tr>
+    <tr><th>Bankadan gelecek</th><td><%= it.maliyet.bankadan %> parça (ücretsiz)</td></tr>
+    <tr><th>Yeni taşıyıcı gerekecek</th><td><%= it.maliyet.yeniKlip %> parça</td></tr>
+    <tr><th>Google çağrısı</th><td><%= it.maliyet.cagri %> (1 gerçek cümle + <%= it.maliyet.cagri - 1 %> çapraz taşıyıcı)</td></tr>
+    <tr><th>Harcanacak karakter</th><td><strong><%= it.maliyet.karakter.toLocaleString('tr-TR') %></strong></td></tr>
+    <tr><th><%= it.kota.tiyerAdi %> kotasından sonra kalan</th>
+        <td><%= Math.max(0, it.kota.kalan - it.maliyet.karakter).toLocaleString('tr-TR') %> karakter</td></tr>
+    <tr><th>Geliştirme bütçesi</th>
+        <td><%= it.butce.klip %>/<%= it.butce.klipSiniri %> klip · <%= it.butce.cagri %> çağrı</td></tr>
+  </table>
+  <% if (it.engel) { %>
+    <div class="uyari hata" style="margin-top:12px"><%= it.engel %></div>
+  <% } %>
+  <form hx-post="/sesler/deneme/calistir" hx-target="#deneme" hx-swap="innerHTML" style="margin-top:14px">
+    <input type="hidden" name="jeton" value="<%= it.jeton %>">
+    <button type="submit" <%= it.engel ? 'disabled' : '' %>>Onaylıyorum, üret</button>
+    <span class="soluk kucuk">Üretim birkaç saniye sürebilir.</span>
+  </form>
+</div>

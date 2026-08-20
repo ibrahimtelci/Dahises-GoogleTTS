@@ -1,0 +1,70 @@
+<div class="kart">
+  <h2>Önizleme — onaydan önce</h2>
+
+  <table style="max-width:640px">
+    <tr><th>Toplam satır</th><td><%= it.ozet.toplam %></td></tr>
+    <tr><th>Yeni eklenecek</th><td><strong><%= it.ozet.yeni %></strong></td></tr>
+    <tr><th>Zaten var</th><td><%= it.ozet.mevcut %></td></tr>
+    <tr><th>Normalizasyonla değişecek</th><td><%= it.ozet.degisen %></td></tr>
+    <tr><th>Engellenecek (§7.5.2)</th><td><%= it.ozet.engellenen %></td></tr>
+    <tr><th>Tahmini karakter</th><td><%= it.ozet.karakter.toLocaleString('tr-TR') %> (taşıyıcı SSML dahil)</td></tr>
+    <tr><th>Gereken taşıyıcı çağrısı</th><td><%= it.ozet.tasiyici %></td></tr>
+    <tr>
+      <th><%= it.kota.tiyerAdi %> kotası</th>
+      <td>
+        kullanılan <%= it.kota.kullanilan.toLocaleString('tr-TR') %> /
+        sert limit <%= it.kota.limitSert.toLocaleString('tr-TR') %><br>
+        <strong>bu eklemeden sonra kalan:
+          <%= Math.max(0, it.kota.kalan - it.ozet.karakter).toLocaleString('tr-TR') %> karakter</strong>
+      </td>
+    </tr>
+    <tr>
+      <th>Google geliştirme bütçesi</th>
+      <td>
+        <%= it.butce.klip %> / <%= it.butce.klipSiniri %> klip kullanıldı,
+        <%= it.butce.kalanKlip %> kaldı
+      </td>
+    </tr>
+  </table>
+
+  <% if (it.engel) { %>
+    <div class="uyari hata" style="margin-top:12px"><%= it.engel %></div>
+  <% } %>
+
+  <h2>Satırlar</h2>
+  <table>
+    <thead><tr><th>Girdi</th><th>Bankaya girecek hâli</th><th>Tip</th><th>Durum</th></tr></thead>
+    <tbody>
+    <% for (const s of it.satirlar.slice(0, 200)) { %>
+      <tr>
+        <td class="mono"><%= s.ham %></td>
+        <td class="mono <%= s.degisti ? '' : 'soluk' %>">
+          <%= s.normal || '—' %>
+          <% if (s.degisti) { %><span class="rozet uyari">normalize</span><% } %>
+        </td>
+        <td><%= s.tip %></td>
+        <td>
+          <% if (s.engelSebebi) { %>
+            <span class="rozet engellendi">engellenecek: <%= s.engelSebebi %></span>
+          <% } else if (s.mevcut) { %>
+            <span class="rozet gri">zaten var</span>
+          <% } else { %>
+            <span class="rozet ready">yeni</span>
+          <% } %>
+        </td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+  <% if (it.satirlar.length > 200) { %>
+    <p class="soluk kucuk">İlk 200 satır gösteriliyor; toplam <%= it.satirlar.length %>.</p>
+  <% } %>
+
+  <form hx-post="/toplu/onayla" hx-target="#onizleme" hx-swap="innerHTML" style="margin-top:16px">
+    <input type="hidden" name="jeton" value="<%= it.jeton %>">
+    <button type="submit" <%= it.engel || it.ozet.yeni === 0 ? 'disabled' : '' %>>
+      <%= it.ozet.yeni %> kelimeyi kuyruğa ekle
+    </button>
+    <span class="soluk kucuk">Kuyruğa eklenir; üretim arka planda çalışır.</span>
+  </form>
+</div>

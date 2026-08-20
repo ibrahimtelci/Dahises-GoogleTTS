@@ -5,7 +5,8 @@ sese çevirme **yapmaz**; kelime dağarcığı önceden seslendirilip diske yaz�
 anons anında yalnızca ham PCM parçaları birleştirilir.
 
 **Durum:** Mimari kararlar verildi ve gerçek veriyle doğrulandı. Prototip tamamlandı, ana
-risk kapandı. Merkez servisi (`tts-merkez`) yazım aşamasında. Hastane servisi henüz başlamadı.
+risk kapandı. Merkez servisi (`tts-merkez`) çalışır durumda — 123 test geçiyor, panel ayakta.
+Hastane servisi henüz başlamadı.
 
 ---
 
@@ -87,7 +88,7 @@ docs/
   FAZ0-SORGULAR.sql        Aynısı, bölüm bölüm
 
 prototip/                  Ses kalitesi prototipi — soruyu cevaplayan kod
-paketler/                  Servis paketleri (tts-merkez yazılıyor)
+paketler/tts-merkez/       Merkez servisi — üretim hattı ve yönetim paneli
 migrasyonlar/              PostgreSQL şema migrasyonları
 arac/                      PostgreSQL başlat/durdur/durum betikleri
 veri/                      Üretilen klipler (depoya girmez)
@@ -136,7 +137,19 @@ Credentials → API key. Anahtarı yalnız bu API'ye kısıtlayın.
 > **`v1beta1` uç noktası gereklidir.** SSML `<mark>` zaman damgaları (`enableTimePointing`)
 > `v1`'de yok ve üretim yöntemi buna bağlı.
 
-### 3. Prototipi çalıştırın
+### 3. Merkez servisini çalıştırın
+
+```bash
+pnpm install
+pnpm migrasyon        # şemayı kur (idempotent)
+pnpm dev              # http://127.0.0.1:3000
+```
+
+İlk açılışta superadmin hesabı üretilir; parola konsola bir kez basılır ve
+`ILK-KURULUM.md` dosyasına yazılır (depoya girmez). Ayrıntı:
+[paketler/tts-merkez/README.md](paketler/tts-merkez/README.md)
+
+### 4. Prototipi çalıştırın
 
 Ses kalitesini kendi kulağınızla doğrulamak için:
 
@@ -175,7 +188,7 @@ Kota koruması üç katmanlı ve tiyer bazlı: %70 uyarı, %85 toplu üretim dur
 - [x] Mimari doküman ve ölçümler
 - [x] Prototip — ses kalitesi sorusu kapandı
 - [x] PostgreSQL şeması tasarımı
-- [ ] `tts-merkez` çekirdeği ve yönetim paneli *(yazılıyor)*
+- [x] `tts-merkez` çekirdeği ve yönetim paneli — [paket README](paketler/tts-merkez/README.md)
 - [ ] `ses-bankasi` — hastane servisi
 - [ ] Socket.IO dağıtım kanalı, manifest mutabakatı, budama
 - [ ] Pilot: bir hastane, 2 hafta

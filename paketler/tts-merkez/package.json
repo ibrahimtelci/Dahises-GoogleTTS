@@ -1,0 +1,34 @@
+{
+  "name": "tts-merkez",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file=../../.env src/ana.ts",
+    "basla": "node --env-file=../../.env src/ana.ts",
+    "test": "node --env-file-if-exists=../../.env --test --test-concurrency=1 test/*.test.ts",
+    "tipler": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src test",
+    "migrasyon": "node --env-file=../../.env src/veritabani/migrasyon-cli.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/formbody": "^8.0.2",
+    "@fastify/multipart": "^10.1.1",
+    "@fastify/session": "^11.1.0",
+    "@fastify/static": "^8.0.4",
+    "@fastify/view": "^10.0.1",
+    "@node-rs/argon2": "^2.0.2",
+    "eta": "^3.5.0",
+    "fastify": "^5.2.0",
+    "htmx.org": "^2.0.10",
+    "pino": "^9.6.0",
+    "postgres": "^3.4.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "typescript-eslint": "^8.18.2"
+  }
+}

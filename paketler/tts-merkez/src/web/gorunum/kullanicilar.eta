@@ -1,0 +1,79 @@
+<%~ include('./_ust.eta', it) %>
+<h1>Kullanıcı yönetimi</h1>
+<p class="aciklama">
+  Roller: <strong>superadmin</strong> (her şey + kullanıcı yönetimi) ·
+  <strong>operator</strong> (üretim + kelime yönetimi) · <strong>izleyici</strong> (yalnız okuma).
+</p>
+
+<div class="uyari uyari">
+  TOTP ve IP kısıtı <strong>bu turda uygulanmadı</strong>; şema kolonları ve arayüz yeri hazır.
+  Sunucuya çıkmadan önce ikisi de gerekli (§9F) — ayrıntı <span class="mono">TODO-BLOKE.md</span> dosyasında.
+</div>
+
+<% if (it.yeniParola) { %>
+<div class="uyari basari">
+  <strong><%= it.yeniParolaKullanici %></strong> için parola (yalnız bir kez gösterilir, kaydedin):
+  <span class="mono" style="font-size:16px"><%= it.yeniParola %></span>
+</div>
+<% } %>
+
+<table>
+  <thead>
+    <tr><th>Kullanıcı</th><th>Rol</th><th>Durum</th><th>TOTP</th><th>Son giriş</th><th>İşlem</th></tr>
+  </thead>
+  <tbody>
+  <% for (const k of it.kullanicilar) { %>
+    <tr>
+      <td class="mono"><%= k.kullanici_adi %></td>
+      <td>
+        <form method="post" action="/kullanicilar/<%= k.id %>/rol" style="display:flex;gap:4px">
+          <select name="rol">
+            <% for (const r of ['superadmin', 'operator', 'izleyici']) { %>
+            <option value="<%= r %>" <%= k.rol === r ? 'selected' : '' %>><%= r %></option>
+            <% } %>
+          </select>
+          <button class="ikincil" type="submit">değiştir</button>
+        </form>
+      </td>
+      <td>
+        <% if (k.aktif) { %><span class="rozet ready">aktif</span>
+        <% } else { %><span class="rozet gri">pasif</span><% } %>
+        <% if (k.parola_degistir) { %>
+          <div class="kucuk soluk">parola değişimi bekliyor</div>
+        <% } %>
+      </td>
+      <td class="soluk kucuk"><%= k.totp_aktif ? 'açık' : 'kapalı (bu turda yok)' %></td>
+      <td class="soluk kucuk"><%= k.son_giris ? new Date(k.son_giris).toLocaleString('tr-TR') : '—' %></td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <form method="post" action="/kullanicilar/<%= k.id %>/parola-sifirla">
+            <button class="ikincil" type="submit">parola sıfırla</button>
+          </form>
+          <form method="post" action="/kullanicilar/<%= k.id %>/aktiflik">
+            <input type="hidden" name="aktif" value="<%= k.aktif ? 'hayir' : 'evet' %>">
+            <button class="ikincil" type="submit"><%= k.aktif ? 'pasifleştir' : 'aktifleştir' %></button>
+          </form>
+        </div>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
+
+<div class="kart" style="margin-top:16px">
+  <h2 style="margin-top:0">Kullanıcı ekle</h2>
+  <form method="post" action="/kullanicilar" class="satir">
+    <div><label for="ka">Kullanıcı adı</label><input id="ka" name="kullaniciAdi" required></div>
+    <div>
+      <label for="rol">Rol</label>
+      <select id="rol" name="rol">
+        <option value="operator">operator</option>
+        <option value="izleyici">izleyici</option>
+        <option value="superadmin">superadmin</option>
+      </select>
+    </div>
+    <button type="submit">Ekle</button>
+    <span class="soluk kucuk">Parola üretilir ve bir kez gösterilir.</span>
+  </form>
+</div>
+<%~ include('./_alt.eta', it) %>
