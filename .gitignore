@@ -27,3 +27,6 @@ Thumbs.db
 
 # Loglar
 *.log
+
+# Kisiye ozel Claude Code ayarlari (izin kurallari)
+.claude/settings.local.json
