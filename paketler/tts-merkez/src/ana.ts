@@ -129,6 +129,16 @@ await app.register(fastifyStatic, {
   list: false,
 });
 
+// Tabler kendi paketinden sunulur — CDN yok. Hastane agi disari acilmayabilir
+// ve surum sabitlenmis olmali. `decorateReply: false` ikinci kayit icin zorunlu.
+await app.register(fastifyStatic, {
+  root: resolve(dirname(require.resolve('@tabler/core/package.json')), 'dist'),
+  prefix: '/statik/tabler/',
+  index: false,
+  list: false,
+  decorateReply: false,
+});
+
 try {
   await app.listen({ port: ayar.PORT, host: ayar.SUNUCU_ADRESI });
   gunluk.info(

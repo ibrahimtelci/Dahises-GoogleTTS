@@ -4,87 +4,56 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Giriş · tts-merkez</title>
+<link rel="stylesheet" href="/statik/tabler/css/tabler.min.css">
 <style>
-:root {
-  --vurgu: #2563eb; --vurgu-koyu: #1d4ed8; --vurgu-soluk: #eff4ff;
-  --kenar: #e3e5ea; --kenar-koyu: #d2d5dc; --metin: #16181d; --soluk: #6b7280;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0; min-height: 100vh; display: grid; place-items: center;
-  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: var(--metin);
-  background: #16171b;
-  background-image:
-    radial-gradient(900px 500px at 15% -10%, rgba(37,99,235,.22), transparent 60%),
-    radial-gradient(700px 400px at 95% 110%, rgba(124,58,237,.18), transparent 60%);
-  padding: 20px;
-}
-.kutu { width: 100%; max-width: 380px; }
-.marka {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  color: #fff; font-weight: 650; font-size: 17px; margin-bottom: 20px;
-  letter-spacing: -.01em;
-}
-.marka .isaret {
-  width: 34px; height: 34px; border-radius: 9px;
-  background: linear-gradient(135deg, var(--vurgu), #7c3aed);
-  display: grid; place-items: center;
-}
-form {
-  background: #fff; border-radius: 14px; padding: 26px;
-  box-shadow: 0 12px 40px rgba(0,0,0,.35);
-}
-h1 { font-size: 17px; font-weight: 620; margin: 0 0 4px; letter-spacing: -.01em; }
-.alt-baslik { color: var(--soluk); font-size: 13.5px; margin: 0 0 20px; }
-label { display: block; font-size: 13px; font-weight: 500; margin: 14px 0 5px; }
-input {
-  width: 100%; padding: 9px 11px; border: 1px solid var(--kenar-koyu);
-  border-radius: 8px; font: inherit; transition: border-color .12s, box-shadow .12s;
-}
-input:focus {
-  outline: none; border-color: var(--vurgu); box-shadow: 0 0 0 3px var(--vurgu-soluk);
-}
-button {
-  width: 100%; margin-top: 20px; padding: 10px; background: var(--vurgu);
-  color: #fff; border: 0; border-radius: 8px; font: inherit; font-weight: 550;
-  cursor: pointer; transition: background .12s;
-}
-button:hover { background: var(--vurgu-koyu); }
-.hata {
-  background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
-  padding: 9px 12px; border-radius: 8px; font-size: 13.5px; margin-bottom: 4px;
-}
-.dipnot { text-align: center; color: #6b7280; font-size: 12.5px; margin-top: 16px; }
+  body {
+    background: #16171b;
+    background-image:
+      radial-gradient(900px 500px at 15% -10%, rgba(37,99,235,.22), transparent 60%),
+      radial-gradient(700px 400px at 95% 110%, rgba(124,58,237,.18), transparent 60%);
+  }
 </style>
 </head>
-<body>
-<div class="kutu">
-  <div class="marka">
-    <span class="isaret">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round">
-        <path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/>
-      </svg>
-    </span>
-    tts-merkez
+<body class="d-flex flex-column">
+<div class="page page-center">
+  <div class="container container-tight py-4">
+
+    <div class="text-center mb-4">
+      <span class="avatar avatar-md mb-2" style="background:linear-gradient(135deg,#2563eb,#7c3aed)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round">
+          <path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/>
+        </svg>
+      </span>
+      <div class="h2 text-white mb-0">tts-merkez</div>
+      <div class="text-secondary small">Hastane anons seslendirme sistemi</div>
+    </div>
+
+    <form class="card card-md" method="post" action="/giris">
+      <div class="card-body">
+        <h2 class="h3 text-center mb-1">Yönetim paneli</h2>
+        <p class="text-secondary text-center mb-4">Devam etmek için giriş yapın.</p>
+
+        <% if (it.hata) { %>
+          <div class="alert alert-danger" role="alert"><%= it.hata %></div>
+        <% } %>
+
+        <div class="mb-3">
+          <label class="form-label" for="k">Kullanıcı adı</label>
+          <input id="k" name="kullaniciAdi" class="form-control" autocomplete="username" autofocus required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="p">Parola</label>
+          <input id="p" name="parola" type="password" class="form-control" autocomplete="current-password" required>
+        </div>
+
+        <div class="form-footer">
+          <button type="submit" class="btn btn-primary w-100">Giriş yap</button>
+        </div>
+      </div>
+    </form>
+
   </div>
-
-  <form method="post" action="/giris">
-    <h1>Yönetim paneli</h1>
-    <p class="alt-baslik">Devam etmek için giriş yapın.</p>
-
-    <% if (it.hata) { %><div class="hata"><%= it.hata %></div><% } %>
-
-    <label for="k">Kullanıcı adı</label>
-    <input id="k" name="kullaniciAdi" autocomplete="username" autofocus required>
-
-    <label for="p">Parola</label>
-    <input id="p" name="parola" type="password" autocomplete="current-password" required>
-
-    <button type="submit">Giriş yap</button>
-  </form>
-
-  <p class="dipnot">Hastane anons seslendirme sistemi</p>
 </div>
 </body>
 </html>
