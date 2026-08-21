@@ -6,91 +6,336 @@
 <title><%= it.baslik %> · tts-merkez</title>
 <script src="/statik/htmx.min.js"></script>
 <style>
+/* ─────────────────────────────────────────────────────────────────────────
+   Yonetim paneli kabugu.
+
+   Duzen: solda sabit kenar cubugu (koyu), sagda icerik (acik). Bu kalip
+   yonetim panellerinde en tanidik olani — kullanici nerede oldugunu
+   ogrenmek zorunda kalmaz.
+
+   Mobilde kenar cubugu cekmece olur; JavaScript yok, gizli onay kutusu
+   ile acilir (htmx disinda betik calistirmiyoruz).
+   ───────────────────────────────────────────────────────────────────── */
 :root {
-  --zemin: #f7f7f8; --kart: #fff; --kenar: #d8d8dd; --metin: #1c1c1f; --soluk: #6a6a75;
-  --vurgu: #1f6feb; --basari: #1a7f37; --uyari: #9a6700; --hata: #cf222e;
-  --uyari-zemin: #fff8c5; --hata-zemin: #ffebe9; --basari-zemin: #dafbe1;
+  /* Icerik */
+  --zemin: #f6f7f9; --kart: #fff; --kenar: #e3e5ea; --kenar-koyu: #d2d5dc;
+  --metin: #16181d; --soluk: #6b7280; --soluk-2: #9aa1ad;
+
+  /* Kenar cubugu */
+  --yan-zemin: #16171b; --yan-metin: #a2a8b4; --yan-aktif-zemin: #24262d;
+  --yan-baslik: #6b7280;
+
+  /* Anlam renkleri */
+  --vurgu: #2563eb; --vurgu-koyu: #1d4ed8; --vurgu-soluk: #eff4ff;
+  --basari: #15803d; --uyari: #a16207; --hata: #b91c1c;
+  --uyari-zemin: #fefce8; --hata-zemin: #fef2f2; --basari-zemin: #f0fdf4;
+
+  --golge: 0 1px 2px rgba(16,24,40,.05);
+  --golge-2: 0 4px 12px rgba(16,24,40,.08);
+  --yuvarlak: 10px;
+  --yan-genislik: 248px;
 }
 * { box-sizing: border-box; }
-body { margin: 0; font: 15px/1.5 system-ui, "Segoe UI", sans-serif; background: var(--zemin); color: var(--metin); }
-header.ust { background: #1c1c1f; color: #fff; padding: 0 16px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-header.ust .marka { font-weight: 700; margin-right: 16px; padding: 12px 0; }
-header.ust a { color: #d8d8dd; text-decoration: none; padding: 12px 10px; display: block; border-bottom: 2px solid transparent; }
-header.ust a:hover { color: #fff; }
-header.ust a.aktif { color: #fff; border-bottom-color: var(--vurgu); }
-header.ust .sag { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-header.ust .rol { color: #9a9aa5; font-size: 13px; }
-main { padding: 20px; max-width: 1400px; margin: 0 auto; }
-h1 { font-size: 20px; margin: 0 0 4px; }
-h2 { font-size: 16px; margin: 24px 0 8px; }
-p.aciklama { color: var(--soluk); margin: 0 0 16px; }
-.kart { background: var(--kart); border: 1px solid var(--kenar); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-table { width: 100%; border-collapse: collapse; background: var(--kart); font-size: 14px; }
-th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--kenar); vertical-align: top; }
-th { background: #f0f0f2; font-weight: 600; font-size: 13px; }
-tr:hover td { background: #fafafa; }
-.rozet { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-.rozet.ready { background: var(--basari-zemin); color: var(--basari); }
-.rozet.pending { background: #eef; color: #33f; }
-.rozet.uretiliyor { background: #e6f0ff; color: var(--vurgu); }
-.rozet.failed { background: var(--hata-zemin); color: var(--hata); }
-.rozet.engellendi { background: #eee; color: #555; }
-.rozet.kota_bekliyor { background: var(--uyari-zemin); color: var(--uyari); }
-.rozet.gri { background: #eee; color: #555; }
-form.satir { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
-label { display: block; font-size: 13px; color: var(--soluk); margin-bottom: 2px; }
-input, select, textarea, button { font: inherit; padding: 6px 9px; border: 1px solid var(--kenar); border-radius: 6px; background: #fff; color: var(--metin); }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--zemin); color: var(--metin);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--vurgu); }
+:focus-visible { outline: 2px solid var(--vurgu); outline-offset: 2px; border-radius: 4px; }
+
+/* ── Gelistirme bandi ── */
+.gelistirme-bandi {
+  background: #7f1d1d; color: #fff; padding: 7px 16px; text-align: center;
+  font-size: 13px; position: relative; z-index: 60;
+}
+.gelistirme-bandi .mono { background: rgba(255,255,255,.15); padding: 1px 5px; border-radius: 4px; }
+
+/* ── Kabuk ── */
+.kabuk { display: flex; min-height: 100%; }
+
+/* ── Kenar cubugu ── */
+.yan {
+  width: var(--yan-genislik); flex: 0 0 var(--yan-genislik);
+  background: var(--yan-zemin); color: var(--yan-metin);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh; z-index: 50;
+}
+.yan .marka {
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 18px 16px; color: #fff; font-weight: 650; font-size: 15px;
+  letter-spacing: -.01em; border-bottom: 1px solid #24262d;
+}
+.yan .marka .isaret {
+  width: 28px; height: 28px; border-radius: 7px; flex: 0 0 28px;
+  background: linear-gradient(135deg, var(--vurgu), #7c3aed);
+  display: grid; place-items: center;
+}
+.yan nav { flex: 1; overflow-y: auto; padding: 14px 10px 10px; }
+.yan .grup {
+  font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--yan-baslik); padding: 14px 8px 6px; margin: 0;
+}
+.yan .grup:first-child { padding-top: 2px; }
+.yan a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; margin-bottom: 1px; border-radius: 7px;
+  color: var(--yan-metin); text-decoration: none; font-size: 14px;
+  position: relative; transition: background .12s, color .12s;
+}
+.yan a:hover { background: #1e2027; color: #e5e7eb; }
+.yan a.aktif { background: var(--yan-aktif-zemin); color: #fff; font-weight: 550; }
+.yan a.aktif::before {
+  content: ""; position: absolute; left: -10px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; background: var(--vurgu); border-radius: 0 3px 3px 0;
+}
+.yan a svg { flex: 0 0 17px; opacity: .85; }
+.yan a.aktif svg { opacity: 1; }
+
+.yan .kullanici {
+  border-top: 1px solid #24262d; padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.yan .kullanici .avatar {
+  width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%;
+  background: #2f323b; color: #fff; display: grid; place-items: center;
+  font-size: 13px; font-weight: 650;
+}
+.yan .kullanici .bilgi { min-width: 0; flex: 1; }
+.yan .kullanici .ad { color: #e5e7eb; font-size: 13px; font-weight: 550;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.yan .kullanici .rol { color: var(--soluk-2); font-size: 12px; }
+.yan .kullanici .eylem { display: flex; gap: 2px; }
+.yan .kullanici .eylem a {
+  padding: 6px; border-radius: 6px; margin: 0;
+}
+
+/* ── Icerik ── */
+.icerik { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.tepe {
+  background: rgba(255,255,255,.85); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--kenar); padding: 0 24px;
+  height: 56px; display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 40;
+}
+.tepe .yol { color: var(--soluk); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.tepe .yol strong { color: var(--metin); font-weight: 600; }
+.tepe .sag { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+main { padding: 24px; max-width: 1400px; width: 100%; }
+
+/* Sayfa basligi — gorunumlerin kendi h1/p.aciklama'si buraya oturur */
+h1 { font-size: 22px; font-weight: 650; letter-spacing: -.015em; margin: 0 0 6px; }
+h2 { font-size: 16px; font-weight: 620; margin: 26px 0 10px; letter-spacing: -.01em; }
+p.aciklama { color: var(--soluk); margin: 0 0 20px; max-width: 78ch; font-size: 14px; }
+
+/* ── Menu dugmesi (mobil) ── */
+#yan-ac { display: none; }
+.menu-dugme { display: none; background: none; border: 1px solid var(--kenar);
+  padding: 6px 8px; border-radius: 7px; cursor: pointer; color: var(--metin); }
+.perde { display: none; }
+
+/* ── Kart ── */
+.kart {
+  background: var(--kart); border: 1px solid var(--kenar); border-radius: var(--yuvarlak);
+  padding: 18px; margin-bottom: 16px; box-shadow: var(--golge);
+}
+.kart > h2:first-child { margin-top: 0; }
+
+/* ── Tablo ── */
+table {
+  width: 100%; border-collapse: separate; border-spacing: 0;
+  background: var(--kart); font-size: 14px;
+  border: 1px solid var(--kenar); border-radius: var(--yuvarlak); overflow: hidden;
+}
+.kart > table, .kart table { border: none; border-radius: 0; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--kenar); vertical-align: top; }
+th {
+  background: #fafbfc; font-weight: 600; font-size: 12px; color: var(--soluk);
+  text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+  position: sticky; top: 56px; z-index: 10;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #fafbfc; }
+
+/* ── Rozet ── */
+.rozet {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  white-space: nowrap; border: 1px solid transparent;
+}
+.rozet.ready { background: var(--basari-zemin); color: var(--basari); border-color: #bbf7d0; }
+.rozet.pending { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.rozet.uretiliyor { background: var(--vurgu-soluk); color: var(--vurgu); border-color: #c7d7fe; }
+.rozet.failed { background: var(--hata-zemin); color: var(--hata); border-color: #fecaca; }
+.rozet.engellendi { background: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
+.rozet.kota_bekliyor { background: var(--uyari-zemin); color: var(--uyari); border-color: #fde68a; }
+.rozet.gri { background: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
+
+/* ── Form ── */
+form.satir { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 14px; }
+label { display: block; font-size: 13px; font-weight: 500; color: var(--metin); margin-bottom: 4px; }
+input, select, textarea, button {
+  font: inherit; padding: 7px 10px; border: 1px solid var(--kenar-koyu);
+  border-radius: 7px; background: #fff; color: var(--metin);
+}
+input, select, textarea { transition: border-color .12s, box-shadow .12s; }
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--vurgu); box-shadow: 0 0 0 3px var(--vurgu-soluk);
+}
 textarea { width: 100%; min-height: 140px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
-button { cursor: pointer; background: var(--vurgu); color: #fff; border-color: var(--vurgu); font-weight: 500; }
-button.ikincil { background: #fff; color: var(--metin); border-color: var(--kenar); }
+button {
+  cursor: pointer; background: var(--vurgu); color: #fff; border-color: var(--vurgu);
+  font-weight: 550; box-shadow: var(--golge); transition: background .12s;
+}
+button:hover:not(:disabled) { background: var(--vurgu-koyu); border-color: var(--vurgu-koyu); }
+button.ikincil { background: #fff; color: var(--metin); border-color: var(--kenar-koyu); }
+button.ikincil:hover:not(:disabled) { background: #f9fafb; border-color: var(--soluk-2); }
 button.tehlike { background: var(--hata); border-color: var(--hata); }
+button.tehlike:hover:not(:disabled) { background: #991b1b; border-color: #991b1b; }
+button.kucuk { padding: 4px 9px; font-size: 13px; }
 button:disabled { opacity: .5; cursor: not-allowed; }
-.uyari { padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid; }
-.uyari.basari { background: var(--basari-zemin); border-color: #aceebb; color: var(--basari); }
-.uyari.hata { background: var(--hata-zemin); border-color: #ffcecb; color: var(--hata); }
-.uyari.uyari { background: var(--uyari-zemin); border-color: #eedf9e; color: var(--uyari); }
-.cubuk { height: 22px; background: #eaeaee; border-radius: 4px; overflow: hidden; position: relative; }
-.cubuk > span { display: block; height: 100%; background: var(--basari); }
-.cubuk.uyari > span { background: #d4a72c; }
+
+/* ── Bildirim ── */
+.uyari {
+  padding: 11px 14px; border-radius: 8px; margin-bottom: 14px;
+  border: 1px solid; font-size: 14px;
+}
+.uyari.basari { background: var(--basari-zemin); border-color: #bbf7d0; color: var(--basari); }
+.uyari.hata { background: var(--hata-zemin); border-color: #fecaca; color: var(--hata); }
+.uyari.uyari { background: var(--uyari-zemin); border-color: #fde68a; color: var(--uyari); }
+
+/* ── Cubuk ── */
+.cubuk { height: 20px; background: #eef0f3; border-radius: 5px; overflow: hidden; }
+.cubuk > span { display: block; height: 100%; background: var(--basari); transition: width .3s; }
+.cubuk.uyari > span { background: #d97706; }
 .cubuk.kritik > span, .cubuk.dolu > span { background: var(--hata); }
-.sayfalama { display: flex; gap: 6px; align-items: center; margin-top: 12px; font-size: 14px; }
+
+/* ── Yardimci ── */
+.sayfalama { display: flex; gap: 8px; align-items: center; margin-top: 14px; font-size: 14px; }
 .soluk { color: var(--soluk); }
 .kucuk { font-size: 13px; }
-.mono { font-family: ui-monospace, Consolas, monospace; }
+.mono { font-family: ui-monospace, Consolas, monospace; font-size: .93em; }
 .izgara { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
-audio { width: 100%; margin-top: 6px; }
-.htmx-request { opacity: .6; }
+audio { width: 100%; margin-top: 8px; height: 36px; }
+.htmx-request { opacity: .55; transition: opacity .1s; }
+
+/* ── Mobil ── */
+@media (max-width: 900px) {
+  .menu-dugme { display: block; }
+  .yan {
+    position: fixed; left: 0; top: 0; height: 100vh;
+    transform: translateX(-100%); transition: transform .2s ease;
+    box-shadow: var(--golge-2);
+  }
+  #yan-ac:checked ~ .kabuk .yan { transform: translateX(0); }
+  #yan-ac:checked ~ .kabuk .perde {
+    display: block; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 45;
+  }
+  main { padding: 16px; }
+  .tepe { padding: 0 16px; }
+  th { position: static; }
+}
 </style>
 </head>
 <body>
-<header class="ust">
-  <span class="marka">tts-merkez</span>
 <% if (it.girisAtlaniyor) { %>
-  <div style="background:#7a2020; color:#fff; padding:6px 16px; text-align:center; font-size:13px">
+  <div class="gelistirme-bandi">
     <strong>GİRİŞ ATLANIYOR</strong> — kimlik doğrulaması kapalı, herkes superadmin.
     Yalnız geliştirme içindir. Kapatmak için <span class="mono">.env</span>:
     <span class="mono">GELISTIRME_GIRIS_ATLA=false</span>
   </div>
 <% } %>
-  <a href="/kelimeler" class="<%= it.aktif === 'kelimeler' ? 'aktif' : '' %>">Kelimeler</a>
-  <a href="/toplu" class="<%= it.aktif === 'toplu' ? 'aktif' : '' %>">Toplu ekleme</a>
-  <a href="/sablonlar" class="<%= it.aktif === 'sablonlar' ? 'aktif' : '' %>">Şablonlar</a>
-  <a href="/sesler" class="<%= it.aktif === 'sesler' ? 'aktif' : '' %>">Sesler ve deneme</a>
-  <a href="/kota" class="<%= it.aktif === 'kota' ? 'aktif' : '' %>">Kota</a>
-  <a href="/gunluk" class="<%= it.aktif === 'gunluk' ? 'aktif' : '' %>">Günlük</a>
-  <% if (it.kullanici && it.kullanici.rol === 'superadmin') { %>
-  <a href="/kullanicilar" class="<%= it.aktif === 'kullanicilar' ? 'aktif' : '' %>">Kullanıcılar</a>
-  <a href="/ayarlar" class="<%= it.aktif === 'ayarlar' ? 'aktif' : '' %>">Ayarlar</a>
-  <% } %>
-  <span class="sag">
+
+<input type="checkbox" id="yan-ac" hidden>
+<div class="kabuk">
+  <label for="yan-ac" class="perde" aria-hidden="true"></label>
+
+  <aside class="yan">
+    <div class="marka">
+      <span class="isaret">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round">
+          <path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/>
+        </svg>
+      </span>
+      tts-merkez
+    </div>
+
+    <nav>
+      <p class="grup">İçerik</p>
+      <a href="/kelimeler" class="<%= it.aktif === 'kelimeler' ? 'aktif' : '' %>">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Kelimeler
+      </a>
+      <a href="/toplu" class="<%= it.aktif === 'toplu' ? 'aktif' : '' %>">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Toplu ekleme
+      </a>
+      <a href="/sablonlar" class="<%= it.aktif === 'sablonlar' ? 'aktif' : '' %>">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Şablonlar
+      </a>
+
+      <p class="grup">Üretim</p>
+      <a href="/sesler" class="<%= it.aktif === 'sesler' ? 'aktif' : '' %>">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+        Sesler ve deneme
+      </a>
+      <a href="/kota" class="<%= it.aktif === 'kota' ? 'aktif' : '' %>">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 15A9 9 0 1 1 9 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+        Kota
+      </a>
+      <a href="/gunluk" class="<%= it.aktif === 'gunluk' ? 'aktif' : '' %>">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        Günlük
+      </a>
+
+      <% if (it.kullanici && it.kullanici.rol === 'superadmin') { %>
+      <p class="grup">Yönetim</p>
+      <a href="/kullanicilar" class="<%= it.aktif === 'kullanicilar' ? 'aktif' : '' %>">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+        Kullanıcılar
+      </a>
+      <a href="/ayarlar" class="<%= it.aktif === 'ayarlar' ? 'aktif' : '' %>">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Ayarlar
+      </a>
+      <% } %>
+    </nav>
+
     <% if (it.kullanici) { %>
-      <span class="rol"><%= it.kullanici.ad %> · <%= it.kullanici.rol %></span>
-      <a href="/parola">Parola</a>
-      <a href="/cikis">Çıkış</a>
+    <div class="kullanici">
+      <span class="avatar"><%= (it.kullanici.ad || '?').slice(0, 2).toLocaleUpperCase('tr-TR') %></span>
+      <span class="bilgi">
+        <div class="ad"><%= it.kullanici.ad %></div>
+        <div class="rol"><%= it.kullanici.rol %></div>
+      </span>
+      <span class="eylem">
+        <a href="/parola" title="Parola değiştir" aria-label="Parola değiştir">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </a>
+        <a href="/cikis" title="Çıkış" aria-label="Çıkış">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </a>
+      </span>
+    </div>
     <% } %>
-  </span>
-</header>
-<main>
-<% if (it.bildirim) { %>
-  <div class="uyari <%= it.bildirim.tur %>"><%= it.bildirim.metin %></div>
-<% } %>
+  </aside>
+
+  <div class="icerik">
+    <div class="tepe">
+      <label for="yan-ac" class="menu-dugme" aria-label="Menü">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </label>
+      <span class="yol">
+        tts-merkez <span class="soluk">/</span> <strong><%= it.baslik %></strong>
+      </span>
+      <span class="sag soluk">
+        <% if (it.kullanici) { %><%= it.kullanici.ad %><% } %>
+      </span>
+    </div>
+
+    <main>
+    <% if (it.bildirim) { %>
+      <div class="uyari <%= it.bildirim.tur %>"><%= it.bildirim.metin %></div>
+    <% } %>
