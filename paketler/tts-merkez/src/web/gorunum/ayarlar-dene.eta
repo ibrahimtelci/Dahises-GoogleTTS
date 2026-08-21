@@ -1,11 +1,11 @@
 <% if (it.tamam) { %>
-  <div class="uyari" style="border-color:#2d7d46; margin-top:10px">
+  <div class="alert alert-success mt-3">
     <strong>Bağlantı çalışıyor.</strong> Motor: <span class="mono"><%= it.motorAdi %></span><br>
     <%= it.toplam %> ses listelendi, <strong><%= it.kesilebilir %></strong> tanesi kesme yöntemini destekliyor.
     Doğal örnekleme hızları: <span class="mono"><%= it.hizlar %></span> Hz.
   </div>
 <% } else { %>
-  <div class="uyari hata" style="margin-top:10px">
+  <div class="alert alert-danger mt-3">
     <strong>Bağlantı kurulamadı.</strong><br>
     <span class="mono kucuk"><%= it.mesaj %></span>
   </div>

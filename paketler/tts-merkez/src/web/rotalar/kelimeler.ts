@@ -125,6 +125,15 @@ export async function kelimeRotalari(app: FastifyInstance): Promise<void> {
        LIMIT ${SAYFA_BOYUTU} OFFSET ${offset}
     `;
 
+    // Ozet kartlari: filtreden bagimsiz genel durum dagilimi.
+    // Tek gecis, indeksli; 250 bin satirda ~5 ms (bkz. YUK-TESTI.md).
+    const dagilimSatirlari = await db<{ durum: string; adet: string }[]>`
+      SELECT durum, count(*)::text AS adet FROM klip GROUP BY durum
+    `;
+    const dagilim: Record<string, number> = {};
+    for (const d of dagilimSatirlari) dagilim[d.durum] = Number(d.adet);
+    const genelToplam = Object.values(dagilim).reduce((t, n) => t + n, 0);
+
     const kotalar = await kotaDurumu(db);
     const dolu = kotalar.filter((k) => k.bant === 'dolu' && k.kesmeDestegi);
     const b = butce.durum();
@@ -154,6 +163,9 @@ export async function kelimeRotalari(app: FastifyInstance): Promise<void> {
         aktif: 'kelimeler',
         satirlar,
         toplam,
+        dagilim,
+        genelToplam,
+        sayfaBoyutu: SAYFA_BOYUTU,
         sayfa: f.sayfa,
         sonSayfa: Math.max(1, Math.ceil(toplam / SAYFA_BOYUTU)),
         filtre: f,

@@ -1,123 +1,273 @@
 <%~ include('./_ust.eta', it) %>
-<h1>Kelime veritabanı</h1>
-<p class="aciklama">
-  Her satır bir (kelime, profil) çifti. Varsayılan sıralama: <strong>çevrilmemişler önce</strong>.
-  Toplam <%= it.toplam.toLocaleString('tr-TR') %> satır — sunucu tarafı sayfalama.
-</p>
 
-<form class="satir" method="get" action="/kelimeler">
-  <div>
-    <label for="q">Kelime ara</label>
-    <input id="q" name="q" value="<%= it.filtre.q %>" placeholder="karabulut">
+<!-- ── Sayfa başlığı ── -->
+<div class="page-header d-print-none mb-3">
+  <div class="row g-2 align-items-center">
+    <div class="col">
+      <h2 class="page-title">Kelime veritabanı</h2>
+      <div class="text-secondary mt-1">
+        Her satır bir <span class="fw-medium">(kelime, profil)</span> çifti.
+        Çevrilmemişler önce listelenir.
+      </div>
+    </div>
+    <div class="col-auto ms-auto d-print-none">
+      <div class="btn-list">
+        <a href="/toplu" class="btn btn-primary">
+          <svg width="16" height="16" class="me-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Toplu ekleme
+        </a>
+      </div>
+    </div>
   </div>
-  <div>
-    <label for="durum">Durum</label>
-    <select id="durum" name="durum">
-      <option value="">hepsi</option>
-      <% for (const d of it.durumlar) { %>
-      <option value="<%= d %>" <%= it.filtre.durum === d ? 'selected' : '' %>><%= d %></option>
+</div>
+
+<!-- ── Özet: duruma göre dağılım. Kartlara tıklayınca o duruma filtrelenir. ── -->
+<div class="row row-cards mb-3">
+  <% const kartlar = [
+       { anahtar: '',              etiket: 'Toplam',       renk: 'secondary', sayi: it.genelToplam },
+       { anahtar: 'ready',         etiket: 'Hazır',        renk: 'success',   sayi: it.dagilim.ready ?? 0 },
+       { anahtar: 'pending',       etiket: 'Bekliyor',     renk: 'blue',      sayi: it.dagilim.pending ?? 0 },
+       { anahtar: 'failed',        etiket: 'Hatalı',       renk: 'danger',    sayi: it.dagilim.failed ?? 0 },
+       { anahtar: 'kota_bekliyor', etiket: 'Kota bekliyor',renk: 'warning',   sayi: it.dagilim.kota_bekliyor ?? 0 },
+       { anahtar: 'engellendi',    etiket: 'Engellendi',   renk: 'secondary', sayi: it.dagilim.engellendi ?? 0 },
+     ]; %>
+  <% for (const k of kartlar) { %>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <a href="/kelimeler<%= k.anahtar ? '?durum=' + k.anahtar : '' %>"
+       class="card card-sm text-decoration-none <%= it.filtre.durum === k.anahtar ? 'border-primary' : '' %>">
+      <div class="card-body">
+        <div class="text-secondary text-uppercase small fw-bold" style="letter-spacing:.04em"><%= k.etiket %></div>
+        <div class="h2 mb-0 mt-1 text-<%= k.renk %>"><%= k.sayi.toLocaleString('tr-TR') %></div>
+      </div>
+    </a>
+  </div>
+  <% } %>
+</div>
+
+<!-- ── Filtreler ── -->
+<% const filtreSayisi = ['q','durum','tip','profil','kaynak','baslangic','bitis']
+     .filter((a) => it.filtre[a]).length; %>
+
+<div class="card mb-3">
+  <div class="card-header py-2">
+    <h3 class="card-title">
+      Filtreler
+      <% if (filtreSayisi > 0) { %>
+        <span class="badge bg-primary-lt ms-1"><%= filtreSayisi %> etkin</span>
       <% } %>
-    </select>
-  </div>
-  <div>
-    <label for="tip">Tip</label>
-    <select id="tip" name="tip">
-      <option value="">hepsi</option>
-      <% for (const t of it.tipler) { %>
-      <option value="<%= t %>" <%= it.filtre.tip === t ? 'selected' : '' %>><%= t %></option>
+    </h3>
+    <div class="card-actions">
+      <% if (filtreSayisi > 0) { %>
+        <a href="/kelimeler" class="btn btn-sm">Temizle</a>
       <% } %>
-    </select>
+    </div>
   </div>
-  <div>
-    <label for="profil">Profil</label>
-    <select id="profil" name="profil">
-      <option value="">hepsi</option>
-      <% for (const p of it.profiller) { %>
-      <option value="<%= p.id %>" <%= it.filtre.profil === p.id ? 'selected' : '' %>><%= p.id %></option>
-      <% } %>
-    </select>
+  <div class="card-body py-2">
+    <form method="get" action="/kelimeler">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="form-label" for="q">Kelime ara</label>
+          <input id="q" name="q" class="form-control" value="<%= it.filtre.q %>" placeholder="karabulut">
+        </div>
+        <div class="col-6 col-md">
+          <label class="form-label" for="durum">Durum</label>
+          <select id="durum" name="durum" class="form-select">
+            <option value="">hepsi</option>
+            <% for (const d of it.durumlar) { %>
+            <option value="<%= d %>" <%= it.filtre.durum === d ? 'selected' : '' %>><%= it.durumEtiketi(d) %></option>
+            <% } %>
+          </select>
+        </div>
+        <div class="col-6 col-md">
+          <label class="form-label" for="tip">Tip</label>
+          <select id="tip" name="tip" class="form-select">
+            <option value="">hepsi</option>
+            <% for (const t of it.tipler) { %>
+            <option value="<%= t %>" <%= it.filtre.tip === t ? 'selected' : '' %>><%= t %></option>
+            <% } %>
+          </select>
+        </div>
+        <div class="col-6 col-md">
+          <label class="form-label" for="profil">Profil</label>
+          <select id="profil" name="profil" class="form-select">
+            <option value="">hepsi</option>
+            <% for (const p of it.profiller) { %>
+            <option value="<%= p.id %>" <%= it.filtre.profil === p.id ? 'selected' : '' %>><%= p.id %></option>
+            <% } %>
+          </select>
+        </div>
+        <div class="col-6 col-md">
+          <label class="form-label" for="kaynak">Kaynak</label>
+          <select id="kaynak" name="kaynak" class="form-select">
+            <option value="">hepsi</option>
+            <option value="toplu"    <%= it.filtre.kaynak === 'toplu' ? 'selected' : '' %>>toplu</option>
+            <option value="fallback" <%= it.filtre.kaynak === 'fallback' ? 'selected' : '' %>>fallback</option>
+            <option value="deneme"   <%= it.filtre.kaynak === 'deneme' ? 'selected' : '' %>>deneme</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-auto">
+          <label class="form-label" for="baslangic">Başlangıç</label>
+          <input id="baslangic" type="date" name="baslangic" class="form-control" value="<%= it.filtre.baslangic %>">
+        </div>
+        <div class="col-6 col-md-auto">
+          <label class="form-label" for="bitis">Bitiş</label>
+          <input id="bitis" type="date" name="bitis" class="form-control" value="<%= it.filtre.bitis %>">
+        </div>
+        <div class="col-12 col-md-auto">
+          <button type="submit" class="btn btn-primary w-100">Filtrele</button>
+        </div>
+      </div>
+    </form>
   </div>
-  <div>
-    <label for="kaynak">Kaynak</label>
-    <select id="kaynak" name="kaynak">
-      <option value="">hepsi</option>
-      <option value="toplu" <%= it.filtre.kaynak === 'toplu' ? 'selected' : '' %>>toplu</option>
-      <option value="fallback" <%= it.filtre.kaynak === 'fallback' ? 'selected' : '' %>>fallback</option>
-      <option value="deneme" <%= it.filtre.kaynak === 'deneme' ? 'selected' : '' %>>deneme</option>
-    </select>
-  </div>
-  <div>
-    <label for="baslangic">Tarih (başlangıç)</label>
-    <input id="baslangic" type="date" name="baslangic" value="<%= it.filtre.baslangic %>">
-  </div>
-  <div>
-    <label for="bitis">Tarih (bitiş)</label>
-    <input id="bitis" type="date" name="bitis" value="<%= it.filtre.bitis %>">
-  </div>
-  <button type="submit">Filtrele</button>
-  <a href="/kelimeler"><button type="button" class="ikincil">Temizle</button></a>
-</form>
+</div>
 
 <% if (it.uretimKilitli) { %>
-<div class="uyari uyari">
-  Üretim butonları kilitli: <%= it.kilitSebebi %>
+<div class="alert alert-warning d-flex align-items-center" role="alert">
+  <svg width="20" height="20" class="me-2 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+  <div><strong>Üretim kilitli.</strong> <%= it.kilitSebebi %></div>
 </div>
 <% } %>
 
-<table>
-  <thead>
-    <tr>
-      <th>Kelime</th><th>Telaffuz</th><th>Tip</th><th>Profil</th><th>Durum</th>
-      <th>Süre</th><th>Sürüm</th><th>Kaynak</th><th>Eklendi</th><th>İşlem</th>
-    </tr>
-  </thead>
-  <tbody>
-  <% if (it.satirlar.length === 0) { %>
-    <tr><td colspan="10" class="soluk">Filtreye uyan kayıt yok.</td></tr>
-  <% } %>
-  <% for (const s of it.satirlar) { %>
-    <tr id="satir-<%= s.id %>">
-      <td class="mono"><%= s.kelime %></td>
-      <td class="mono soluk"><%= s.telaffuz || '—' %></td>
-      <td><%= s.tipler || '—' %></td>
-      <td><%= s.profil %></td>
-      <td>
-        <span class="rozet <%= s.durum %>"><%= it.durumEtiketi(s.durum) %></span>
-        <% if (s.hata) { %><div class="kucuk soluk" title="<%= s.hata %>"><%= String(s.hata).slice(0, 60) %></div><% } %>
-      </td>
-      <td><%= s.sure_ms ? s.sure_ms + ' ms' : '—' %></td>
-      <td class="soluk"><%= s.surum ?? '—' %></td>
-      <td class="soluk"><%= s.kaynak %></td>
-      <td class="soluk kucuk"><%= new Date(s.olusturuldu).toLocaleString('tr-TR') %></td>
-      <td>
-        <div style="display:flex;gap:4px;flex-wrap:wrap">
-        <% if (s.durum === 'ready') { %>
-          <button class="ikincil kucuk" hx-get="/kelimeler/<%= s.id %>/dinle" hx-target="#ses-<%= s.id %>" hx-swap="innerHTML">▶ dinle</button>
-        <% } %>
-        <% if (it.yazabilir) { %>
-          <button class="ikincil kucuk" hx-post="/kelimeler/<%= s.id %>/yeniden-uret" hx-target="#satir-<%= s.id %>" hx-swap="outerHTML" <%= it.uretimKilitli ? 'disabled title="' + it.kilitSebebi + '"' : '' %>>↻ yeniden üret</button>
-          <% if (s.durum === 'engellendi') { %>
-            <button class="ikincil kucuk" hx-post="/kelimeler/<%= s.id %>/engeli-kaldir" hx-target="#satir-<%= s.id %>" hx-swap="outerHTML">↺ engeli kaldır</button>
-          <% } else { %>
-            <button class="tehlike kucuk" hx-post="/kelimeler/<%= s.id %>/engelle" hx-target="#satir-<%= s.id %>" hx-swap="outerHTML" hx-confirm="Bu kelime engellensin mi? Bankaya girmez.">⛔ engelle</button>
-          <% } %>
-          <button class="ikincil kucuk" hx-get="/kelimeler/<%= s.id %>/telaffuz" hx-target="#ses-<%= s.id %>" hx-swap="innerHTML">✎ telaffuz</button>
-        <% } %>
-        </div>
-        <div id="ses-<%= s.id %>"></div>
-      </td>
-    </tr>
-  <% } %>
-  </tbody>
-</table>
+<!-- ── Tablo ── -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead>
+        <tr>
+          <th>Kelime</th>
+          <th>Tip</th>
+          <th>Profil</th>
+          <th>Durum</th>
+          <th class="text-end">Süre</th>
+          <th class="text-end">Sürüm</th>
+          <th>Kaynak</th>
+          <th>Eklendi</th>
+          <th class="w-1"></th>
+        </tr>
+      </thead>
+      <tbody>
+      <% if (it.satirlar.length === 0) { %>
+        <tr>
+          <td colspan="9">
+            <div class="empty">
+              <div class="empty-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
+              <p class="empty-title">Kayıt bulunamadı</p>
+              <p class="empty-subtitle text-secondary">
+                <% if (filtreSayisi > 0) { %>
+                  Filtreye uyan kelime yok. Filtreleri gevşetmeyi deneyin.
+                <% } else { %>
+                  Banka henüz boş. Toplu ekleme ekranından kelime yükleyerek başlayın.
+                <% } %>
+              </p>
+              <div class="empty-action">
+                <% if (filtreSayisi > 0) { %>
+                  <a href="/kelimeler" class="btn btn-primary">Filtreleri temizle</a>
+                <% } else { %>
+                  <a href="/toplu" class="btn btn-primary">Toplu ekleme</a>
+                <% } %>
+              </div>
+            </div>
+          </td>
+        </tr>
+      <% } %>
 
-<div class="sayfalama">
-  <% if (it.sayfa > 1) { %>
-    <a href="<%= it.sayfaBaglantisi(it.sayfa - 1) %>"><button class="ikincil" type="button">‹ önceki</button></a>
-  <% } %>
-  <span class="soluk">sayfa <%= it.sayfa %> / <%= it.sonSayfa %></span>
-  <% if (it.sayfa < it.sonSayfa) { %>
-    <a href="<%= it.sayfaBaglantisi(it.sayfa + 1) %>"><button class="ikincil" type="button">sonraki ›</button></a>
+      <% for (const s of it.satirlar) { %>
+        <tr id="satir-<%= s.id %>">
+          <td>
+            <div class="fw-medium mono"><%= s.kelime %></div>
+            <% if (s.telaffuz) { %>
+              <div class="text-secondary small" title="TTS'e gönderilen metin">
+                telaffuz: <span class="mono"><%= s.telaffuz %></span>
+              </div>
+            <% } %>
+          </td>
+          <td class="text-secondary"><%= s.tipler || '—' %></td>
+          <td class="text-secondary"><%= s.profil %></td>
+          <td>
+            <span class="rozet <%= s.durum %>"><%= it.durumEtiketi(s.durum) %></span>
+            <% if (s.hata) { %>
+              <div class="text-danger small text-truncate" style="max-width:220px" title="<%= s.hata %>"><%= s.hata %></div>
+            <% } %>
+          </td>
+          <td class="text-end text-secondary"><%= s.sure_ms ? s.sure_ms + ' ms' : '—' %></td>
+          <td class="text-end text-secondary"><%= s.surum ?? '—' %></td>
+          <td class="text-secondary"><%= s.kaynak %></td>
+          <td class="text-secondary small" title="<%= new Date(s.olusturuldu).toLocaleString('tr-TR') %>">
+            <%= new Date(s.olusturuldu).toLocaleDateString('tr-TR') %>
+          </td>
+          <td>
+            <div class="btn-list flex-nowrap justify-content-end">
+              <% if (s.durum === 'ready') { %>
+                <button class="btn btn-sm btn-icon" title="Dinle"
+                        hx-get="/kelimeler/<%= s.id %>/dinle" hx-target="#ses-<%= s.id %>" hx-swap="innerHTML">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </button>
+              <% } %>
+              <% if (it.yazabilir) { %>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-icon" data-bs-toggle="dropdown" aria-label="İşlemler" aria-expanded="false">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end">
+                    <button class="dropdown-item" <%= it.uretimKilitli ? 'disabled title="' + it.kilitSebebi + '"' : '' %>
+                            hx-post="/kelimeler/<%= s.id %>/yeniden-uret" hx-target="#satir-<%= s.id %>" hx-swap="outerHTML">
+                      Yeniden üret
+                    </button>
+                    <button class="dropdown-item"
+                            hx-get="/kelimeler/<%= s.id %>/telaffuz" hx-target="#ses-<%= s.id %>" hx-swap="innerHTML">
+                      Telaffuzu düzelt
+                    </button>
+                    <div class="dropdown-divider"></div>
+                    <% if (s.durum === 'engellendi') { %>
+                      <button class="dropdown-item"
+                              hx-post="/kelimeler/<%= s.id %>/engeli-kaldir" hx-target="#satir-<%= s.id %>" hx-swap="outerHTML">
+                        Engeli kaldır
+                      </button>
+                    <% } else { %>
+                      <button class="dropdown-item text-danger"
+                              hx-post="/kelimeler/<%= s.id %>/engelle" hx-target="#satir-<%= s.id %>" hx-swap="outerHTML"
+                              hx-confirm="Bu kelime engellensin mi? Bankaya girmez.">
+                        Engelle
+                      </button>
+                    <% } %>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+            <div id="ses-<%= s.id %>"></div>
+          </td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (it.satirlar.length > 0) { %>
+  <div class="card-footer d-flex align-items-center">
+    <p class="m-0 text-secondary">
+      <%= ((it.sayfa - 1) * it.sayfaBoyutu + 1).toLocaleString('tr-TR') %>–<%=
+         Math.min(it.sayfa * it.sayfaBoyutu, it.toplam).toLocaleString('tr-TR') %>
+      / <strong><%= it.toplam.toLocaleString('tr-TR') %></strong> kayıt
+    </p>
+    <ul class="pagination m-0 ms-auto">
+      <li class="page-item <%= it.sayfa <= 1 ? 'disabled' : '' %>">
+        <a class="page-link" href="<%= it.sayfa > 1 ? it.sayfaBaglantisi(it.sayfa - 1) : '#' %>">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          önceki
+        </a>
+      </li>
+      <li class="page-item disabled"><span class="page-link"><%= it.sayfa %> / <%= it.sonSayfa %></span></li>
+      <li class="page-item <%= it.sayfa >= it.sonSayfa ? 'disabled' : '' %>">
+        <a class="page-link" href="<%= it.sayfa < it.sonSayfa ? it.sayfaBaglantisi(it.sayfa + 1) : '#' %>">
+          sonraki
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </li>
+    </ul>
+  </div>
   <% } %>
 </div>
+
 <%~ include('./_alt.eta', it) %>

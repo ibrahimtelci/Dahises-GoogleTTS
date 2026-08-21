@@ -1,137 +1,231 @@
 <%~ include('./_ust.eta', it) %>
-<h1>Ayarlar</h1>
-<p class="aciklama">
-  Buradaki iki ayar da <strong>çalışma anında</strong> değişir; sunucuyu yeniden başlatmaya
-  gerek yoktur. Ayarlar <span class="mono">.env</span> dosyasını <strong>ezer</strong> —
-  buradaki alan boşsa <span class="mono">.env</span> geçerli kalır.
-</p>
 
-<div class="kart">
-  <h2 style="margin-top:0">Google kimliği</h2>
-
-  <p class="kucuk">
-    Şu anki motor: <strong><%= it.kimlik.motorAdi %></strong>
-    <% if (it.kimlik.sahte) { %>
-      <span class="rozet failed">SAHTE — üretilen ses gerçek değil</span>
-    <% } else { %>
-      <span class="rozet ready">gerçek</span>
-    <% } %>
-    · Kaynak:
-    <strong><%= it.kimlik.kaynak === 'veritabani' ? 'Ayarlar' : (it.kimlik.kaynak === 'env' ? '.env dosyası' : 'yok') %></strong>
-  </p>
-
-  <table style="margin-bottom:12px">
-    <tbody>
-      <tr><th style="width:200px">API anahtarı</th><td class="mono"><%= it.kimlik.apiMaskeli %></td></tr>
-      <tr><th>Service account</th><td class="mono"><%= it.kimlik.servisHesabi ?? '—' %></td></tr>
-    </tbody>
-  </table>
-
-  <form method="post" action="/ayarlar/google">
-    <label>Yeni API anahtarı
-      <input type="password" name="apiAnahtari" autocomplete="off" placeholder="AIza… (boş bırakılırsa değişmez)">
-    </label>
-    <label>Service account JSON yolu <span class="soluk">(opsiyonel)</span>
-      <input type="text" name="servisHesabi" autocomplete="off" placeholder="C:\yol\anahtar.json">
-    </label>
-    <button type="submit">Kaydet ve motoru yenile</button>
-    <button type="submit" name="temizle" value="1" class="ikincil"
-            onclick="return confirm('Kimlik silinecek ve sistem SAHTE motora düşecek. Google\'a hiç gidilmeyecek. Emin misiniz?')">
-      Kimliği temizle
-    </button>
-  </form>
-
-  <p style="margin-top:14px">
-    <button type="button" hx-post="/ayarlar/google/dene" hx-target="#dene-sonuc" hx-swap="innerHTML" class="ikincil">
-      Bağlantıyı dene
-    </button>
-    <span class="soluk kucuk">— <span class="mono">listVoices</span> çağırır, karakter harcamaz.</span>
-  </p>
-  <div id="dene-sonuc"></div>
-
-  <div class="uyari" style="margin-top:14px">
-    <strong>Anahtar veritabanında düz metin durur.</strong> <span class="mono">pg_dump</span>
-    yedeği bu anahtarı içerir; <span class="mono">yedek/</span> dizini dışarı çıkarılmamalı.
-    Arayüz anahtarı hiçbir zaman tam göstermez.
+<div class="page-header d-print-none mb-3">
+  <div class="row g-2 align-items-center">
+    <div class="col">
+      <h2 class="page-title">Ayarlar</h2>
+      <div class="text-secondary mt-1">
+        Buradaki ayarlar <strong>çalışma anında</strong> değişir; sunucuyu yeniden başlatmaya
+        gerek yok. <span class="mono">.env</span> dosyasını <strong>ezer</strong> — alan boşsa
+        <span class="mono">.env</span> geçerli kalır.
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="kart">
-  <h2 style="margin-top:0">Ses profilleri</h2>
-  <p class="kucuk">
-    Varsayılan profil, üretimin hangi sesle yapılacağını belirler. Profil eklemek bankayı
-    büyütür: <strong>her profil ayrı bir banka varyantıdır</strong>, aynı kelime her profil
-    için yeniden üretilir.
-  </p>
+<div class="row row-cards">
 
-  <table>
-    <thead>
-      <tr><th>Profil</th><th>Ses</th><th>Tiyer</th><th>Örnekleme</th><th>Durum</th><th>İşlem</th></tr>
-    </thead>
-    <tbody>
-    <% for (const p of it.profiller) { %>
-      <tr>
-        <td>
-          <strong><%= p.id %></strong>
-          <% if (p.varsayilan) { %><span class="rozet ready">varsayılan</span><% } %>
-        </td>
-        <td class="mono"><%= p.motor_sesi %></td>
-        <td><%= it.tiyerAdlari[p.tiyer] ?? p.tiyer %></td>
-        <td><%= p.ornek_hizi %> Hz</td>
-        <td>
-          <% if (p.aktif) { %><span class="rozet ready">aktif</span>
-          <% } else { %><span class="rozet failed">pasif</span><% } %>
-        </td>
-        <td>
-          <% if (!p.varsayilan && p.aktif) { %>
-            <form method="post" action="/ayarlar/profil/<%= p.id %>/varsayilan" style="display:inline">
-              <button type="submit" class="ikincil kucuk">Varsayılan yap</button>
-            </form>
+  <!-- ── Google kimliği ── -->
+  <div class="col-12 col-xl-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h3 class="card-title">Google kimliği</h3>
+        <div class="card-actions">
+          <% if (it.kimlik.sahte) { %>
+            <span class="badge bg-danger-lt">SAHTE motor</span>
+          <% } else { %>
+            <span class="badge bg-success-lt">gerçek</span>
           <% } %>
-          <% if (!p.varsayilan) { %>
-            <form method="post" action="/ayarlar/profil/<%= p.id %>/durum" style="display:inline">
-              <button type="submit" class="ikincil kucuk"><%= p.aktif ? 'Pasifleştir' : 'Etkinleştir' %></button>
-            </form>
+        </div>
+      </div>
+      <div class="card-body">
+        <% if (it.kimlik.sahte) { %>
+          <div class="alert alert-danger">
+            <strong>Üretilen ses gerçek değil.</strong> Kimlik olmadığı için sahte motor
+            kullanılıyor — panel açılır ama Google&rsquo;a hiç gidilmez.
+          </div>
+        <% } %>
+
+        <div class="datagrid mb-3">
+          <div class="datagrid-item">
+            <div class="datagrid-title">Motor</div>
+            <div class="datagrid-content fw-medium"><%= it.kimlik.motorAdi %></div>
+          </div>
+          <div class="datagrid-item">
+            <div class="datagrid-title">Kaynak</div>
+            <div class="datagrid-content">
+              <%= it.kimlik.kaynak === 'veritabani' ? 'Ayarlar' : (it.kimlik.kaynak === 'env' ? '.env dosyası' : 'yok') %>
+            </div>
+          </div>
+          <div class="datagrid-item">
+            <div class="datagrid-title">API anahtarı</div>
+            <div class="datagrid-content mono"><%= it.kimlik.apiMaskeli %></div>
+          </div>
+          <div class="datagrid-item">
+            <div class="datagrid-title">Service account</div>
+            <div class="datagrid-content mono"><%= it.kimlik.servisHesabi ?? '—' %></div>
+          </div>
+        </div>
+
+        <form method="post" action="/ayarlar/google">
+          <div class="mb-3">
+            <label class="form-label" for="apiAnahtari">Yeni API anahtarı</label>
+            <input id="apiAnahtari" type="password" name="apiAnahtari" class="form-control"
+                   autocomplete="off" placeholder="AIza…">
+            <small class="form-hint">Boş bırakırsanız mevcut anahtar değişmez.</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="servisHesabi">Service account JSON yolu</label>
+            <input id="servisHesabi" type="text" name="servisHesabi" class="form-control"
+                   autocomplete="off" placeholder="C:\yol\anahtar.json">
+            <small class="form-hint">İsteğe bağlı — API anahtarı yerine kullanılabilir.</small>
+          </div>
+          <div class="btn-list">
+            <button type="submit" class="btn btn-primary">Kaydet ve motoru yenile</button>
+            <button type="submit" name="temizle" value="1" class="btn btn-danger"
+                    onclick="return confirm('Kimlik silinecek ve sistem SAHTE motora düşecek. Emin misiniz?')">
+              Kimliği temizle
+            </button>
+          </div>
+        </form>
+
+        <hr class="my-3">
+
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn"
+                  hx-post="/ayarlar/google/dene" hx-target="#dene-sonuc" hx-swap="innerHTML">
+            Bağlantıyı dene
+            <span class="spinner-border spinner-border-sm ms-1 htmx-indicator" role="status"></span>
+          </button>
+          <span class="text-secondary small"><span class="mono">listVoices</span> çağırır, karakter harcamaz.</span>
+        </div>
+        <div id="dene-sonuc"></div>
+
+        <div class="alert alert-warning mt-3 mb-0">
+          <strong>Anahtar veritabanında düz metin durur.</strong>
+          <span class="mono">pg_dump</span> yedeği bu anahtarı içerir;
+          <span class="mono">yedek/</span> dizini dışarı çıkarılmamalı. Arayüz anahtarı hiçbir
+          zaman tam göstermez.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Ses profilleri ── -->
+  <div class="col-12 col-xl-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h3 class="card-title">Ses profilleri</h3>
+        <div class="card-actions"><span class="text-secondary small"><%= it.profiller.length %> profil</span></div>
+      </div>
+      <div class="card-body pb-0">
+        <p class="text-secondary small">
+          Varsayılan profil, üretimin hangi sesle yapılacağını belirler. Profil eklemek bankayı
+          büyütür: <strong>her profil ayrı bir banka varyantıdır</strong>, aynı kelime her profil
+          için yeniden üretilir.
+        </p>
+      </div>
+
+      <% if (it.profiller.length === 0) { %>
+        <div class="card-body">
+          <div class="empty">
+            <p class="empty-title">Profil yok</p>
+            <p class="empty-subtitle text-secondary">Aşağıdan bir ses seçip ekleyin.</p>
+          </div>
+        </div>
+      <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead>
+            <tr><th>Profil</th><th>Ses</th><th>Tiyer</th><th class="text-end">Hz</th><th class="w-1"></th></tr>
+          </thead>
+          <tbody>
+          <% for (const p of it.profiller) { %>
+            <tr class="<%= p.aktif ? '' : 'opacity-50' %>">
+              <td>
+                <div class="fw-medium"><%= p.id %></div>
+                <div>
+                  <% if (p.varsayilan) { %><span class="badge bg-success-lt">varsayılan</span><% } %>
+                  <% if (!p.aktif) { %><span class="badge bg-secondary-lt">pasif</span><% } %>
+                </div>
+              </td>
+              <td class="mono text-secondary"><%= p.motor_sesi %></td>
+              <td class="text-secondary"><%= it.tiyerAdlari[p.tiyer] ?? p.tiyer %></td>
+              <td class="text-end text-secondary"><%= p.ornek_hizi %></td>
+              <td>
+                <% if (!p.varsayilan) { %>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-icon" data-bs-toggle="dropdown" aria-label="İşlemler">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end">
+                    <% if (p.aktif) { %>
+                    <form method="post" action="/ayarlar/profil/<%= p.id %>/varsayilan">
+                      <button type="submit" class="dropdown-item">Varsayılan yap</button>
+                    </form>
+                    <% } %>
+                    <form method="post" action="/ayarlar/profil/<%= p.id %>/durum">
+                      <button type="submit" class="dropdown-item <%= p.aktif ? 'text-danger' : '' %>">
+                        <%= p.aktif ? 'Pasifleştir' : 'Etkinleştir' %>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+                <% } %>
+              </td>
+            </tr>
           <% } %>
-        </td>
-      </tr>
-    <% } %>
-    <% if (it.profiller.length === 0) { %>
-      <tr><td colspan="6" class="soluk">Profil yok.</td></tr>
-    <% } %>
-    </tbody>
-  </table>
-</div>
-
-<div class="kart">
-  <h2 style="margin-top:0">Profil ekle</h2>
-  <p class="kucuk">
-    Ses listesi Google’dan <strong>canlı</strong> çekilir, elle yazılmaz.
-    Kesme yöntemini desteklemeyen sesler (Chirp 3 HD) listelenmez — SSML işaretlerine
-    zaman damgası döndürmedikleri için bu mimaride kullanılamazlar (§6.6).
-  </p>
-
-  <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end">
-    <label style="flex:0 0 180px">Tiyer
-      <select name="tiyer" hx-get="/ayarlar/sesler" hx-target="#ses-secici" hx-include="[name='cinsiyet']" hx-trigger="change">
-        <option value="">hepsi</option>
-        <option value="standard">Standard — 4M/ay ücretsiz</option>
-        <option value="wavenet">WaveNet — 1M/ay ücretsiz</option>
-      </select>
-    </label>
-    <label style="flex:0 0 160px">Cinsiyet
-      <select name="cinsiyet" hx-get="/ayarlar/sesler" hx-target="#ses-secici" hx-include="[name='tiyer']" hx-trigger="change">
-        <option value="">hepsi</option>
-        <option value="FEMALE">Kadın</option>
-        <option value="MALE">Erkek</option>
-      </select>
-    </label>
-    <button type="button" class="ikincil" hx-get="/ayarlar/sesler" hx-target="#ses-secici"
-            hx-include="[name='tiyer'],[name='cinsiyet']">Sesleri getir</button>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+    </div>
   </div>
 
-  <div id="ses-secici" style="margin-top:14px">
-    <p class="soluk kucuk">Tiyer veya cinsiyet seçin — sesler burada listelenir.</p>
+  <!-- ── Profil ekle ── -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Profil ekle</h3></div>
+      <div class="card-body">
+        <p class="text-secondary small">
+          Ses listesi Google&rsquo;dan <strong>canlı</strong> çekilir, elle yazılmaz.
+          Kesme yöntemini desteklemeyen sesler (Chirp 3 HD) listelenmez — SSML işaretlerine
+          zaman damgası döndürmedikleri için bu mimaride kullanılamazlar.
+        </p>
+
+        <div class="row g-2 align-items-end mb-3">
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="f-tiyer">Tiyer</label>
+            <select id="f-tiyer" name="tiyer" class="form-select"
+                    hx-get="/ayarlar/sesler" hx-target="#ses-secici"
+                    hx-include="[name='cinsiyet']" hx-trigger="change">
+              <option value="">hepsi</option>
+              <option value="standard">Standard — 4M/ay ücretsiz</option>
+              <option value="wavenet">WaveNet — 1M/ay ücretsiz</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="f-cinsiyet">Cinsiyet</label>
+            <select id="f-cinsiyet" name="cinsiyet" class="form-select"
+                    hx-get="/ayarlar/sesler" hx-target="#ses-secici"
+                    hx-include="[name='tiyer']" hx-trigger="change">
+              <option value="">hepsi</option>
+              <option value="FEMALE">Kadın</option>
+              <option value="MALE">Erkek</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-auto">
+            <button type="button" class="btn w-100"
+                    hx-get="/ayarlar/sesler" hx-target="#ses-secici"
+                    hx-include="[name='tiyer'],[name='cinsiyet']">
+              Sesleri getir
+              <span class="spinner-border spinner-border-sm ms-1 htmx-indicator" role="status"></span>
+            </button>
+          </div>
+        </div>
+
+        <div id="ses-secici">
+          <div class="empty py-3">
+            <p class="empty-title">Ses seçilmedi</p>
+            <p class="empty-subtitle text-secondary">
+              Tiyer veya cinsiyet seçin — sesler burada listelenir.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
 </div>
+
 <%~ include('./_alt.eta', it) %>

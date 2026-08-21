@@ -1,40 +1,67 @@
 <%~ include('./_ust.eta', it) %>
-<h1>Toplu ekleme</h1>
-<p class="aciklama">
-  Satır satır yapıştırın veya CSV/TXT yükleyin. Biçim: <span class="mono">kelime,tip</span> ya da yalnız
-  <span class="mono">kelime</span>. Onaydan önce normalizasyon sonucu ve karakter maliyeti gösterilir.
-</p>
 
-<div class="kart">
-  <form hx-post="/toplu/onizleme" hx-target="#onizleme" hx-swap="innerHTML" hx-encoding="multipart/form-data">
-    <div class="satir">
-      <div>
-        <label for="profil">Profil</label>
-        <select id="profil" name="profil">
-          <% for (const p of it.profiller) { %>
-          <option value="<%= p.id %>"><%= p.id %> — <%= p.motor_sesi %> (<%= p.tiyer %>)</option>
-          <% } %>
-        </select>
-      </div>
-      <div>
-        <label for="varsayilanTip">Varsayılan tip (satırda belirtilmemişse)</label>
-        <select id="varsayilanTip" name="varsayilanTip">
-          <% for (const t of it.tipler) { %><option value="<%= t %>"><%= t %></option><% } %>
-        </select>
-      </div>
-      <div>
-        <label for="hastaneId">Hastane (doktor/poliklinik için)</label>
-        <input id="hastaneId" name="hastaneId" type="number" value="0" min="0" style="width:100px">
+<div class="page-header d-print-none mb-3">
+  <div class="row g-2 align-items-center">
+    <div class="col">
+      <h2 class="page-title">Toplu ekleme</h2>
+      <div class="text-secondary mt-1">
+        Satır satır yapıştırın veya CSV/TXT yükleyin. Onaydan önce normalizasyon sonucu ve
+        karakter maliyeti gösterilir — hiçbir şey sorulmadan üretilmez.
       </div>
     </div>
-    <label for="metin">Kelimeler</label>
-    <textarea id="metin" name="metin" placeholder="karabulut,soyad&#10;yılmaz,soyad&#10;Wagner,soyad&#10;Uzm.Dr. Eda Birgül,doktor"></textarea>
-    <div class="satir" style="margin-top:10px">
-      <div>
-        <label for="dosya">veya CSV/TXT dosyası</label>
-        <input id="dosya" name="dosya" type="file" accept=".csv,.txt">
+    <div class="col-auto"><a href="/kelimeler" class="btn">Kelimelere dön</a></div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <form hx-post="/toplu/onizleme" hx-target="#onizleme" hx-swap="innerHTML" hx-encoding="multipart/form-data">
+    <div class="card-body">
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="profil">Profil</label>
+          <select id="profil" name="profil" class="form-select">
+            <% for (const p of it.profiller) { %>
+            <option value="<%= p.id %>"><%= p.id %> — <%= p.motor_sesi %> (<%= p.tiyer %>)</option>
+            <% } %>
+          </select>
+          <small class="form-hint">Her profil ayrı banka varyantıdır.</small>
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="varsayilanTip">Varsayılan tip</label>
+          <select id="varsayilanTip" name="varsayilanTip" class="form-select">
+            <% for (const t of it.tipler) { %><option value="<%= t %>"><%= t %></option><% } %>
+          </select>
+          <small class="form-hint">Satırda tip belirtilmemişse bu kullanılır.</small>
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="hastaneId">Hastane</label>
+          <input id="hastaneId" name="hastaneId" type="number" class="form-control" value="0" min="0">
+          <small class="form-hint">0 = ortak havuz. Doktor/poliklinik için hastane no.</small>
+        </div>
       </div>
-      <button type="submit">Önizle</button>
+
+      <div class="mb-3">
+        <label class="form-label" for="metin">Kelimeler</label>
+        <textarea id="metin" name="metin" class="form-control font-monospace"
+                  placeholder="karabulut,soyad&#10;yılmaz,soyad&#10;Wagner,soyad&#10;Uzm.Dr. Eda Birgül,doktor"></textarea>
+        <small class="form-hint">
+          Biçim: <span class="mono">kelime,tip</span> ya da yalnız <span class="mono">kelime</span>.
+          Her satır bir kayıt.
+        </small>
+      </div>
+
+      <div class="mb-0">
+        <label class="form-label" for="dosya">veya CSV/TXT dosyası</label>
+        <input id="dosya" name="dosya" type="file" class="form-control" accept=".csv,.txt">
+      </div>
+    </div>
+
+    <div class="card-footer d-flex align-items-center">
+      <span class="text-secondary small">Önizleme Google&rsquo;a istek göndermez.</span>
+      <button type="submit" class="btn btn-primary ms-auto">
+        Önizle
+        <span class="spinner-border spinner-border-sm ms-2 htmx-indicator" role="status"></span>
+      </button>
     </div>
   </form>
 </div>

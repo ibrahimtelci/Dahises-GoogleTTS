@@ -1,62 +1,115 @@
 <%~ include('./_ust.eta', it) %>
-<h1>Şablonlar</h1>
-<p class="aciklama">
-  Cümle kalıbı. Değişkenler <span class="mono">{süslü}</span> parantez içinde yazılır.
-  Taşıyıcı cümlede hangi öğenin hangi yuvada olduğu buradan belirlenir — ad ve soyad farklı
-  tonlama yuvalarıdır (§7.5 kural 5), bu yüzden yuva <strong>tipi</strong> önemlidir:
-  üretim, kelimeyi yalnız kendi tonlama sınıfındaki bir yuvaya yerleştirir.
-</p>
 
-<% for (const s of it.sablonlar) { %>
-<div class="kart">
-  <h2 style="margin-top:0">
-    <%= s.ad %>
-    <% if (s.varsayilan) { %><span class="rozet ready">varsayılan</span><% } %>
-  </h2>
-  <p class="mono"><%= s.metin %></p>
-  <table style="max-width:700px">
-    <thead><tr><th>#</th><th>Yuva</th><th>Tür</th><th>Tip</th><th>Örnek değer</th></tr></thead>
-    <tbody>
-    <% for (const [i, y] of (s.ogeler || []).entries()) { %>
-      <tr>
-        <td class="soluk"><%= i %></td>
-        <td class="mono"><%= y.yuva %></td>
-        <td><%= y.tur %></td>
-        <td><%= y.tip %></td>
-        <td class="mono"><%= y.ornek %></td>
-      </tr>
-    <% } %>
-    </tbody>
-  </table>
-  <% if (it.yazabilir) { %>
-  <form method="post" action="/sablonlar/<%= s.id %>/sil" style="margin-top:10px"
-        onsubmit="return confirm('Şablon silinsin mi?')">
-    <button class="tehlike" type="submit">Sil</button>
-  </form>
-  <% } %>
-</div>
-<% } %>
-
-<% if (it.yazabilir) { %>
-<div class="kart">
-  <h2 style="margin-top:0">Yeni şablon</h2>
-  <form method="post" action="/sablonlar">
-    <div class="satir">
-      <div><label for="ad">Ad</label><input id="ad" name="ad" required placeholder="banko-cagrisi"></div>
-      <div style="flex:1">
-        <label for="metin">Metin</label>
-        <input id="metin" name="metin" required style="width:100%"
-               value="sayın {ad} {soyad} lütfen {banko} nolu bankoya geçiniz">
+<div class="page-header d-print-none mb-3">
+  <div class="row g-2 align-items-center">
+    <div class="col">
+      <h2 class="page-title">Şablonlar</h2>
+      <div class="text-secondary mt-1">
+        Cümle kalıbı. Değişkenler <span class="mono">{süslü}</span> parantez içinde yazılır.
       </div>
     </div>
-    <label for="ornekler">
-      Değişken tanımları — satır başına <span class="mono">değişken=örnek=tip</span>
-    </label>
-    <textarea id="ornekler" name="ornekler" style="min-height:90px">ad=Mehmet=ad
+    <% if (it.yazabilir) { %>
+    <div class="col-auto"><a href="#yeni-sablon" class="btn btn-primary">Yeni şablon</a></div>
+    <% } %>
+  </div>
+</div>
+
+<div class="alert alert-secondary">
+  <strong>Yuva tipi neden önemli?</strong> Taşıyıcı cümlede ad ve soyad
+  <strong>farklı tonlama yuvalarıdır</strong>. Üretim, bir kelimeyi yalnız kendi tonlama
+  sınıfındaki yuvaya yerleştirir — soyadı &ldquo;sayı&rdquo; yuvasından kesmek cümle ortasında
+  duyulur ve geri dönüşü yeniden üretimdir.
+</div>
+
+<div class="row row-cards mb-3">
+<% for (const s of it.sablonlar) { %>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <%= s.ad %>
+          <% if (s.varsayilan) { %><span class="badge bg-success-lt ms-1">varsayılan</span><% } %>
+        </h3>
+        <% if (it.yazabilir) { %>
+        <div class="card-actions">
+          <form method="post" action="/sablonlar/<%= s.id %>/sil"
+                onsubmit="return confirm('Şablon silinsin mi?')">
+            <button class="btn btn-sm btn-danger" type="submit">Sil</button>
+          </form>
+        </div>
+        <% } %>
+      </div>
+      <div class="card-body pb-0">
+        <div class="mono p-2 rounded" style="background:var(--tblr-bg-surface-tertiary)"><%= s.metin %></div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th class="w-1">#</th><th>Yuva</th><th>Tür</th><th>Tip</th><th>Örnek değer</th></tr></thead>
+          <tbody>
+          <% for (const [i, y] of (s.ogeler || []).entries()) { %>
+            <tr>
+              <td class="text-secondary"><%= i %></td>
+              <td class="mono fw-medium"><%= y.yuva %></td>
+              <td>
+                <span class="badge <%= y.tur === 'degisken' ? 'bg-primary-lt' : 'bg-secondary-lt' %>"><%= y.tur %></span>
+              </td>
+              <td class="text-secondary"><%= y.tip %></td>
+              <td class="mono text-secondary"><%= y.ornek %></td>
+            </tr>
+          <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<% if (it.sablonlar.length === 0) { %>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="empty">
+          <p class="empty-title">Şablon yok</p>
+          <p class="empty-subtitle text-secondary">Aşağıdaki formdan ilk şablonu ekleyin.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<% } %>
+</div>
+
+<% if (it.yazabilir) { %>
+<div class="card" id="yeni-sablon">
+  <div class="card-header"><h3 class="card-title">Yeni şablon</h3></div>
+  <form method="post" action="/sablonlar">
+    <div class="card-body">
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="ad">Ad</label>
+          <input id="ad" name="ad" class="form-control" required placeholder="banko-cagrisi">
+        </div>
+        <div class="col-12 col-md-8">
+          <label class="form-label" for="metin">Metin</label>
+          <input id="metin" name="metin" class="form-control font-monospace" required
+                 value="sayın {ad} {soyad} lütfen {banko} nolu bankoya geçiniz">
+        </div>
+      </div>
+      <div class="mb-0">
+        <label class="form-label" for="ornekler">Değişken tanımları</label>
+        <textarea id="ornekler" name="ornekler" class="form-control font-monospace"
+                  style="min-height:90px">ad=Mehmet=ad
 soyad=Karabulut=soyad
 banko=üç=sayi</textarea>
-    <button type="submit" style="margin-top:10px">Kaydet</button>
+        <small class="form-hint">
+          Satır başına <span class="mono">değişken=örnek=tip</span>. Tip, tonlama yuvasını belirler.
+        </small>
+      </div>
+    </div>
+    <div class="card-footer d-flex">
+      <button type="submit" class="btn btn-primary ms-auto">Kaydet</button>
+    </div>
   </form>
 </div>
 <% } %>
+
 <%~ include('./_alt.eta', it) %>

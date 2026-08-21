@@ -1,76 +1,134 @@
 <%~ include('./_ust.eta', it) %>
-<h1>Üretim ve denetim günlüğü</h1>
 
-<h2>Üretim günlüğü</h2>
-<table>
-  <thead>
-    <tr><th>Zaman</th><th>Tür</th><th>Profil</th><th>Klip</th><th>Karakter</th><th>Sonuç</th></tr>
-  </thead>
-  <tbody>
-  <% if (it.uretim.length === 0) { %>
-    <tr><td colspan="6" class="soluk">Kayıt yok.</td></tr>
-  <% } %>
-  <% for (const u of it.uretim) { %>
-    <tr>
-      <td class="kucuk soluk"><%= new Date(u.zaman).toLocaleString('tr-TR') %></td>
-      <td><%= u.tur %></td>
-      <td><%= u.profil || '—' %></td>
-      <td><%= u.klip_sayisi %></td>
-      <td><%= Number(u.karakter).toLocaleString('tr-TR') %></td>
-      <td>
-        <% if (u.basarili) { %>
-          <span class="rozet ready">tamam</span>
-        <% } else { %>
-          <span class="rozet failed">hata</span>
-          <div class="kucuk soluk"><%= String(u.hata || '').slice(0, 140) %></div>
-        <% } %>
-      </td>
-    </tr>
-  <% } %>
-  </tbody>
-</table>
+<div class="page-header d-print-none mb-3">
+  <div class="row g-2 align-items-center">
+    <div class="col">
+      <h2 class="page-title">Günlük</h2>
+      <div class="text-secondary mt-1">
+        Üretim geçmişi, sorunlu klipler ve denetim kayıtları. Son 100 kayıt gösterilir.
+      </div>
+    </div>
+  </div>
+</div>
 
-<h2>Hatalı, engellenen ve kota bekleyen klipler</h2>
-<table>
-  <thead>
-    <tr><th>Kelime</th><th>Profil</th><th>Durum</th><th>Deneme</th><th>Sonraki deneme</th><th>Hata</th></tr>
-  </thead>
-  <tbody>
+<!-- ── Sorunlu klipler önce: eyleme dönüşecek olan bu ── -->
+<div class="card mb-3 <%= it.sorunlu.length > 0 ? 'border-danger' : '' %>">
+  <div class="card-header">
+    <h3 class="card-title">Sorunlu klipler</h3>
+    <div class="card-actions">
+      <% if (it.sorunlu.length > 0) { %>
+        <span class="badge bg-danger-lt"><%= it.sorunlu.length %> kayıt</span>
+      <% } %>
+    </div>
+  </div>
   <% if (it.sorunlu.length === 0) { %>
-    <tr><td colspan="6" class="soluk">Sorunlu klip yok.</td></tr>
+    <div class="card-body">
+      <div class="empty">
+        <div class="empty-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <p class="empty-title">Sorun yok</p>
+        <p class="empty-subtitle text-secondary">Hatalı, engellenen veya kota bekleyen klip bulunmuyor.</p>
+      </div>
+    </div>
+  <% } else { %>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead>
+        <tr><th>Kelime</th><th>Profil</th><th>Durum</th><th class="text-end">Deneme</th><th>Sonraki deneme</th><th>Hata</th></tr>
+      </thead>
+      <tbody>
+      <% for (const s of it.sorunlu) { %>
+        <tr>
+          <td class="fw-medium mono"><%= s.kelime %></td>
+          <td class="text-secondary"><%= s.profil %></td>
+          <td><span class="rozet <%= s.durum %>"><%= s.durum %></span></td>
+          <td class="text-end text-secondary"><%= s.deneme %></td>
+          <td class="text-secondary small">
+            <%= s.sonraki_deneme ? new Date(s.sonraki_deneme).toLocaleString('tr-TR') : '—' %>
+          </td>
+          <td class="small text-danger text-truncate" style="max-width:320px" title="<%= s.hata || '' %>">
+            <%= s.hata || '—' %>
+          </td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
   <% } %>
-  <% for (const s of it.sorunlu) { %>
-    <tr>
-      <td class="mono"><%= s.kelime %></td>
-      <td><%= s.profil %></td>
-      <td><span class="rozet <%= s.durum %>"><%= s.durum %></span></td>
-      <td><%= s.deneme %></td>
-      <td class="kucuk soluk"><%= s.sonraki_deneme ? new Date(s.sonraki_deneme).toLocaleString('tr-TR') : '—' %></td>
-      <td class="kucuk"><%= String(s.hata || '').slice(0, 160) %></td>
-    </tr>
-  <% } %>
-  </tbody>
-</table>
+</div>
 
-<h2>Denetim günlüğü</h2>
-<p class="aciklama">Kim, ne zaman, ne üretti / sildi / engelledi / ayar değiştirdi.</p>
-<table>
-  <thead>
-    <tr><th>Zaman</th><th>Kullanıcı</th><th>Eylem</th><th>Hedef</th><th>Ayrıntı</th></tr>
-  </thead>
-  <tbody>
+<!-- ── Üretim günlüğü ── -->
+<div class="card mb-3">
+  <div class="card-header"><h3 class="card-title">Üretim günlüğü</h3></div>
+  <% if (it.uretim.length === 0) { %>
+    <div class="card-body">
+      <div class="empty">
+        <p class="empty-title">Henüz üretim yapılmadı</p>
+        <p class="empty-subtitle text-secondary">Toplu ekleme veya deneme çalıştırdığınızda burada görünür.</p>
+        <div class="empty-action"><a href="/toplu" class="btn btn-primary">Toplu ekleme</a></div>
+      </div>
+    </div>
+  <% } else { %>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead>
+        <tr><th>Zaman</th><th>Tür</th><th>Profil</th><th class="text-end">Klip</th><th class="text-end">Karakter</th><th>Sonuç</th></tr>
+      </thead>
+      <tbody>
+      <% for (const u of it.uretim) { %>
+        <tr>
+          <td class="text-secondary small"><%= new Date(u.zaman).toLocaleString('tr-TR') %></td>
+          <td><%= u.tur %></td>
+          <td class="text-secondary"><%= u.profil || '—' %></td>
+          <td class="text-end"><%= u.klip_sayisi %></td>
+          <td class="text-end text-secondary"><%= Number(u.karakter).toLocaleString('tr-TR') %></td>
+          <td>
+            <% if (u.basarili) { %>
+              <span class="rozet ready">tamam</span>
+            <% } else { %>
+              <span class="rozet failed">hata</span>
+              <div class="small text-danger text-truncate" style="max-width:280px" title="<%= u.hata || '' %>"><%= u.hata || '' %></div>
+            <% } %>
+          </td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>
+
+<!-- ── Denetim ── -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Denetim günlüğü</h3>
+    <div class="card-actions"><span class="text-secondary small">Kim, ne zaman, ne yaptı</span></div>
+  </div>
   <% if (it.denetim.length === 0) { %>
-    <tr><td colspan="5" class="soluk">Kayıt yok.</td></tr>
+    <div class="card-body">
+      <div class="empty"><p class="empty-title">Kayıt yok</p></div>
+    </div>
+  <% } else { %>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead>
+        <tr><th>Zaman</th><th>Kullanıcı</th><th>Eylem</th><th>Hedef</th><th>Ayrıntı</th></tr>
+      </thead>
+      <tbody>
+      <% for (const d of it.denetim) { %>
+        <tr>
+          <td class="text-secondary small"><%= new Date(d.zaman).toLocaleString('tr-TR') %></td>
+          <td class="fw-medium"><%= d.kullanici_adi || '—' %></td>
+          <td><span class="badge bg-secondary-lt"><%= d.eylem %></span></td>
+          <td class="mono small text-secondary"><%= d.hedef || '—' %></td>
+          <td class="mono small text-secondary text-truncate" style="max-width:280px"><%= JSON.stringify(d.ayrinti) %></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
   <% } %>
-  <% for (const d of it.denetim) { %>
-    <tr>
-      <td class="kucuk soluk"><%= new Date(d.zaman).toLocaleString('tr-TR') %></td>
-      <td class="mono"><%= d.kullanici_adi || '—' %></td>
-      <td><%= d.eylem %></td>
-      <td class="mono kucuk"><%= d.hedef || '—' %></td>
-      <td class="kucuk soluk mono"><%= JSON.stringify(d.ayrinti) %></td>
-    </tr>
-  <% } %>
-  </tbody>
-</table>
+</div>
+
 <%~ include('./_alt.eta', it) %>

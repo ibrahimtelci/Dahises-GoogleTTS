@@ -1,4 +1,4 @@
-<table>
+<table class="table table-vcenter card-table">
   <thead><tr><th>Ses</th><th>Tiyer</th><th>Cinsiyet</th><th>Doğal örnekleme</th><th>Kesme yöntemi</th></tr></thead>
   <tbody>
   <% for (const s of it.sesler) { %>
@@ -9,13 +9,13 @@
       <td><%= s.dogalOrnekHizi %> Hz</td>
       <td>
         <% if (s.kesmeDestegi) { %>
-          <span class="rozet ready">destekliyor</span>
+          <span class="badge bg-success-lt">destekliyor</span>
         <% } else { %>
-          <span class="rozet failed">kesme desteklemiyor — seçilemez</span>
+          <span class="badge bg-danger-lt">kesme yok — seçilemez</span>
         <% } %>
       </td>
     </tr>
   <% } %>
   </tbody>
 </table>
-<p class="soluk kucuk"><%= it.sesler.length %> ses listelendi. Kesme desteklemeyen sesler profil olarak eklenemez.</p>
+<p class="text-secondary small mt-2"><%= it.sesler.length %> ses listelendi. Kesme desteklemeyen sesler profil olarak eklenemez.</p>

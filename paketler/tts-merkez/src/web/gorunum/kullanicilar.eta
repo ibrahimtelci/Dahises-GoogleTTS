@@ -1,79 +1,125 @@
 <%~ include('./_ust.eta', it) %>
-<h1>Kullanıcı yönetimi</h1>
-<p class="aciklama">
-  Roller: <strong>superadmin</strong> (her şey + kullanıcı yönetimi) ·
-  <strong>operator</strong> (üretim + kelime yönetimi) · <strong>izleyici</strong> (yalnız okuma).
-</p>
 
-<div class="uyari uyari">
-  TOTP ve IP kısıtı <strong>bu turda uygulanmadı</strong>; şema kolonları ve arayüz yeri hazır.
-  Sunucuya çıkmadan önce ikisi de gerekli (§9F) — ayrıntı <span class="mono">TODO-BLOKE.md</span> dosyasında.
+<div class="page-header d-print-none mb-3">
+  <div class="row g-2 align-items-center">
+    <div class="col">
+      <h2 class="page-title">Kullanıcılar</h2>
+      <div class="text-secondary mt-1">
+        <strong>superadmin</strong> her şey + kullanıcı yönetimi ·
+        <strong>operator</strong> üretim + kelime yönetimi ·
+        <strong>izleyici</strong> yalnız okuma
+      </div>
+    </div>
+    <div class="col-auto">
+      <a href="#kullanici-ekle" class="btn btn-primary">
+        <svg width="16" height="16" class="me-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Kullanıcı ekle
+      </a>
+    </div>
+  </div>
 </div>
 
 <% if (it.yeniParola) { %>
-<div class="uyari basari">
-  <strong><%= it.yeniParolaKullanici %></strong> için parola (yalnız bir kez gösterilir, kaydedin):
-  <span class="mono" style="font-size:16px"><%= it.yeniParola %></span>
+<div class="alert alert-success">
+  <h4 class="alert-title">Parola üretildi — yalnız bir kez gösterilir</h4>
+  <div class="text-secondary mb-2"><strong><%= it.yeniParolaKullanici %></strong> için:</div>
+  <div class="mono fs-3 fw-bold"><%= it.yeniParola %></div>
+  <div class="text-secondary small mt-2">Şimdi kaydedin. Sayfayı yenilerseniz bir daha görünmez.</div>
 </div>
 <% } %>
 
-<table>
-  <thead>
-    <tr><th>Kullanıcı</th><th>Rol</th><th>Durum</th><th>TOTP</th><th>Son giriş</th><th>İşlem</th></tr>
-  </thead>
-  <tbody>
-  <% for (const k of it.kullanicilar) { %>
-    <tr>
-      <td class="mono"><%= k.kullanici_adi %></td>
-      <td>
-        <form method="post" action="/kullanicilar/<%= k.id %>/rol" style="display:flex;gap:4px">
-          <select name="rol">
-            <% for (const r of ['superadmin', 'operator', 'izleyici']) { %>
-            <option value="<%= r %>" <%= k.rol === r ? 'selected' : '' %>><%= r %></option>
-            <% } %>
-          </select>
-          <button class="ikincil" type="submit">değiştir</button>
-        </form>
-      </td>
-      <td>
-        <% if (k.aktif) { %><span class="rozet ready">aktif</span>
-        <% } else { %><span class="rozet gri">pasif</span><% } %>
-        <% if (k.parola_degistir) { %>
-          <div class="kucuk soluk">parola değişimi bekliyor</div>
-        <% } %>
-      </td>
-      <td class="soluk kucuk"><%= k.totp_aktif ? 'açık' : 'kapalı (bu turda yok)' %></td>
-      <td class="soluk kucuk"><%= k.son_giris ? new Date(k.son_giris).toLocaleString('tr-TR') : '—' %></td>
-      <td>
-        <div style="display:flex;gap:4px;flex-wrap:wrap">
-          <form method="post" action="/kullanicilar/<%= k.id %>/parola-sifirla">
-            <button class="ikincil" type="submit">parola sıfırla</button>
-          </form>
-          <form method="post" action="/kullanicilar/<%= k.id %>/aktiflik">
-            <input type="hidden" name="aktif" value="<%= k.aktif ? 'hayir' : 'evet' %>">
-            <button class="ikincil" type="submit"><%= k.aktif ? 'pasifleştir' : 'aktifleştir' %></button>
-          </form>
-        </div>
-      </td>
-    </tr>
-  <% } %>
-  </tbody>
-</table>
+<div class="alert alert-warning">
+  <strong>TOTP ve IP kısıtı bu turda uygulanmadı.</strong> Şema kolonları ve arayüz yeri hazır.
+  Sunucuya çıkmadan önce ikisi de gerekli — ayrıntı <span class="mono">TODO-BLOKE.md</span> dosyasında.
+</div>
 
-<div class="kart" style="margin-top:16px">
-  <h2 style="margin-top:0">Kullanıcı ekle</h2>
-  <form method="post" action="/kullanicilar" class="satir">
-    <div><label for="ka">Kullanıcı adı</label><input id="ka" name="kullaniciAdi" required></div>
-    <div>
-      <label for="rol">Rol</label>
-      <select id="rol" name="rol">
-        <option value="operator">operator</option>
-        <option value="izleyici">izleyici</option>
-        <option value="superadmin">superadmin</option>
-      </select>
+<div class="card mb-3">
+  <div class="card-header">
+    <h3 class="card-title">Hesaplar</h3>
+    <div class="card-actions"><span class="text-secondary small"><%= it.kullanicilar.length %> kullanıcı</span></div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table">
+      <thead>
+        <tr><th>Kullanıcı</th><th>Rol</th><th>Durum</th><th>TOTP</th><th>Son giriş</th><th class="w-1"></th></tr>
+      </thead>
+      <tbody>
+      <% for (const k of it.kullanicilar) { %>
+        <tr class="<%= k.aktif ? '' : 'opacity-50' %>">
+          <td>
+            <div class="d-flex align-items-center">
+              <span class="avatar avatar-sm me-2 bg-primary-lt"><%= (k.kullanici_adi || '?').slice(0, 2).toLocaleUpperCase('tr-TR') %></span>
+              <span class="fw-medium"><%= k.kullanici_adi %></span>
+            </div>
+          </td>
+          <td>
+            <form method="post" action="/kullanicilar/<%= k.id %>/rol" class="d-flex gap-1">
+              <select name="rol" class="form-select form-select-sm" style="width:auto">
+                <% for (const r of ['superadmin', 'operator', 'izleyici']) { %>
+                <option value="<%= r %>" <%= k.rol === r ? 'selected' : '' %>><%= r %></option>
+                <% } %>
+              </select>
+              <button class="btn btn-sm" type="submit">Değiştir</button>
+            </form>
+          </td>
+          <td>
+            <% if (k.aktif) { %><span class="rozet ready">aktif</span>
+            <% } else { %><span class="rozet gri">pasif</span><% } %>
+            <% if (k.parola_degistir) { %>
+              <div class="text-secondary small mt-1">parola değişimi bekliyor</div>
+            <% } %>
+          </td>
+          <td class="text-secondary small"><%= k.totp_aktif ? 'açık' : 'kapalı' %></td>
+          <td class="text-secondary small"><%= k.son_giris ? new Date(k.son_giris).toLocaleString('tr-TR') : '—' %></td>
+          <td>
+            <div class="dropdown">
+              <button class="btn btn-sm btn-icon" data-bs-toggle="dropdown" aria-label="İşlemler" aria-expanded="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <form method="post" action="/kullanicilar/<%= k.id %>/parola-sifirla">
+                  <button class="dropdown-item" type="submit">Parola sıfırla</button>
+                </form>
+                <form method="post" action="/kullanicilar/<%= k.id %>/aktiflik">
+                  <input type="hidden" name="aktif" value="<%= k.aktif ? 'hayir' : 'evet' %>">
+                  <button class="dropdown-item <%= k.aktif ? 'text-danger' : '' %>" type="submit">
+                    <%= k.aktif ? 'Pasifleştir' : 'Etkinleştir' %>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" id="kullanici-ekle">
+  <div class="card-header"><h3 class="card-title">Kullanıcı ekle</h3></div>
+  <form method="post" action="/kullanicilar">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="ka">Kullanıcı adı</label>
+          <input id="ka" name="kullaniciAdi" class="form-control" required autocomplete="off">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="rol">Rol</label>
+          <select id="rol" name="rol" class="form-select">
+            <option value="operator">operator</option>
+            <option value="izleyici">izleyici</option>
+            <option value="superadmin">superadmin</option>
+          </select>
+        </div>
+      </div>
     </div>
-    <button type="submit">Ekle</button>
-    <span class="soluk kucuk">Parola üretilir ve bir kez gösterilir.</span>
+    <div class="card-footer d-flex align-items-center">
+      <span class="text-secondary small">Parola üretilir ve bir kez gösterilir.</span>
+      <button type="submit" class="btn btn-primary ms-auto">Ekle</button>
+    </div>
   </form>
 </div>
+
 <%~ include('./_alt.eta', it) %>
